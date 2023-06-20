@@ -6,7 +6,7 @@ RUN apt-get update --yes
 RUN apt-get install gcc --yes
 
 # Install Poetry
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir poetry==1.3.2
 
 # Switch back to the jovyan user
 USER jovyan
