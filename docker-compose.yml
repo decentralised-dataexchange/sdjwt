@@ -1,20 +1,11 @@
 version: '3'
 services:
   jupyter:
-    image: jupyter/base-notebook
+    build: .
     ports:
       - 8888:8888
     volumes:
-      - ./notebooks:/work
+      - .:/home/jovyan/work
     environment:
       - JUPYTER_ENABLE_LAB=yes
     command: start-notebook.sh --NotebookApp.token=''
-    depends_on:
-      - poetry
-
-  poetry:
-    image: python:3.9
-    volumes:
-      - .:/work
-    working_dir: /app
-    command: bash -c "pip install poetry && poetry install --no-root"
