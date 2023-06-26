@@ -245,29 +245,6 @@ wrapt = ">=1.10,<2"
 dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "sphinx (<2)", "tox"]
 
 [[package]]
-name = "ebsi-wallet"
-version = "0.1.3"
-description = "EBSI Python SDK"
-category = "main"
-optional = false
-python-versions = ">=3.8.1,<3.11"
-
-[package.dependencies]
-aiohttp = ">=3.8.1,<4.0.0"
-base58 = "1.0.3"
-coincurve = ">=17.0.0,<18.0.0"
-cryptography = ">=41.0.1,<42.0.0"
-eth-keys = ">=0.4.0,<0.5.0"
-jsonschema = ">=4.14.0,<5.0.0"
-jwcrypto = ">=1.3.1,<2.0.0"
-multiformats = ">=0.2.1,<0.3.0"
-py-multibase = ">=1.0.3,<2.0.0"
-PyJWT = ">=2.4.0,<3.0.0"
-pysha3 = ">=1.0.2,<2.0.0"
-rich = ">=12.5.1,<13.0.0"
-sslcrypto = ">=5.3,<6.0"
-
-[[package]]
 name = "eth-hash"
 version = "0.5.2"
 description = "eth-hash: The Ethereum hashing function, keccak256, sometimes (erroneously) called sha3"
@@ -337,6 +314,29 @@ lint = ["black (>=23)", "flake8 (==3.8.3)", "isort (>=5.11.0)", "mypy (==0.971)"
 test = ["hypothesis (>=4.43.0)", "mypy (==0.971)", "pytest (>=7.0.0)", "pytest-xdist (>=2.4.0)", "types-setuptools"]
 
 [[package]]
+name = "eudi-wallet"
+version = "0.0.1"
+description = "EUDI Wallet SDK"
+category = "main"
+optional = false
+python-versions = ">=3.8.1,<3.11"
+
+[package.dependencies]
+aiohttp = ">=3.8.1,<4.0.0"
+base58 = "1.0.3"
+coincurve = ">=17.0.0,<18.0.0"
+cryptography = ">=41.0.1,<42.0.0"
+eth-keys = ">=0.4.0,<0.5.0"
+jsonschema = ">=4.14.0,<5.0.0"
+jwcrypto = ">=1.3.1,<2.0.0"
+multiformats = ">=0.2.1,<0.3.0"
+py-multibase = ">=1.0.3,<2.0.0"
+PyJWT = ">=2.4.0,<3.0.0"
+pysha3 = ">=1.0.2,<2.0.0"
+rich = ">=12.5.1,<13.0.0"
+sslcrypto = ">=5.3,<6.0"
+
+[[package]]
 name = "executing"
 version = "1.2.0"
 description = "Get the currently executing AST node of a frame, and other information"
@@ -396,7 +396,7 @@ testing = ["flake8 (<5)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-chec
 
 [[package]]
 name = "ipykernel"
-version = "6.23.2"
+version = "6.23.3"
 description = "IPython Kernel for Jupyter"
 category = "dev"
 optional = false
@@ -496,7 +496,7 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [[package]]
 name = "jupyter-client"
-version = "8.2.0"
+version = "8.3.0"
 description = "Jupyter protocol implementation and client libraries"
 category = "dev"
 optional = false
@@ -659,7 +659,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "platformdirs"
-version = "3.7.0"
+version = "3.8.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "dev"
 optional = false
@@ -960,7 +960,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8.1,<3.11"
-content-hash = "9a76064238ab481b1dc3bb800a7a337c73e0a213d3c1d09af15bc027c202be63"
+content-hash = "3994280bf8677739b6a1ddf4e6d044866e9250ce821c10c84e0a56372b8bab24"
 
 [metadata.files]
 aiohttp = [
@@ -1429,10 +1429,6 @@ deprecated = [
     {file = "Deprecated-1.2.14-py2.py3-none-any.whl", hash = "sha256:6fac8b097794a90302bdbb17b9b815e732d3c4720583ff1b198499d78470466c"},
     {file = "Deprecated-1.2.14.tar.gz", hash = "sha256:e5323eb936458dccc2582dc6f9c322c852a775a27065ff2b0c4970b9d53d01b3"},
 ]
-ebsi-wallet = [
-    {file = "ebsi_wallet-0.1.3-py3-none-any.whl", hash = "sha256:8206b7ac0b63f271c7cfe8bd958259932db1d636507c8c798c8b5ec853d94f84"},
-    {file = "ebsi_wallet-0.1.3.tar.gz", hash = "sha256:ff6106fa699f13db477f566dec799e2578bad535731edaba3029a0799a60d41f"},
-]
 eth-hash = [
     {file = "eth-hash-0.5.2.tar.gz", hash = "sha256:1b5f10eca7765cc385e1430eefc5ced6e2e463bb18d1365510e2e539c1a6fe4e"},
     {file = "eth_hash-0.5.2-py3-none-any.whl", hash = "sha256:251f62f6579a1e247561679d78df37548bd5f59908da0b159982bf8293ad32f0"},
@@ -1448,6 +1444,10 @@ eth-typing = [
 eth-utils = [
     {file = "eth-utils-2.1.1.tar.gz", hash = "sha256:7cccfb0b0749431d0d001e327e9a7289bf07308316a73850ae3895020e5682f4"},
     {file = "eth_utils-2.1.1-py3-none-any.whl", hash = "sha256:4938ab742f91cdf19bae024261af090664f63ccf83bdb1213e7146c14209e899"},
+]
+eudi-wallet = [
+    {file = "eudi_wallet-0.0.1-py3-none-any.whl", hash = "sha256:87c2ee86b413720214ece7481ebc5a8f750273f49fb1265c80147bfbaabae537"},
+    {file = "eudi_wallet-0.0.1.tar.gz", hash = "sha256:1fb9340bfbf5bf9021011fe6e08ee3a4eb62769223a0468c7dc119dc73d38144"},
 ]
 executing = [
     {file = "executing-1.2.0-py2.py3-none-any.whl", hash = "sha256:0314a69e37426e3608aada02473b4161d4caf5a4b244d1d0c48072b8fee7bacc"},
@@ -1542,8 +1542,8 @@ importlib-resources = [
     {file = "importlib_resources-5.12.0.tar.gz", hash = "sha256:4be82589bf5c1d7999aedf2a45159d10cb3ca4f19b2271f8792bc8e6da7b22f6"},
 ]
 ipykernel = [
-    {file = "ipykernel-6.23.2-py3-none-any.whl", hash = "sha256:7ccb6e2d32fd958c21453db494c914f3474908a2fdefd99ab548a5375b548d1f"},
-    {file = "ipykernel-6.23.2.tar.gz", hash = "sha256:fcfb67c5b504aa1bfcda1c5b3716636239e0f7b9290958f1c558c79b4c0e7ed5"},
+    {file = "ipykernel-6.23.3-py3-none-any.whl", hash = "sha256:bc00662dc44d4975b668cdb5fefb725e38e9d8d6e28441a519d043f38994922d"},
+    {file = "ipykernel-6.23.3.tar.gz", hash = "sha256:dd4e18116357f36a1e459b3768412371bee764c51844cbf25c4ed1eb9cae4a54"},
 ]
 ipython = [
     {file = "ipython-8.12.2-py3-none-any.whl", hash = "sha256:ea8801f15dfe4ffb76dea1b09b847430ffd70d827b41735c64a0638a04103bfc"},
@@ -1558,8 +1558,8 @@ jsonschema = [
     {file = "jsonschema-4.17.3.tar.gz", hash = "sha256:0f864437ab8b6076ba6707453ef8f98a6a0d512a80e93f8abdb676f737ecb60d"},
 ]
 jupyter-client = [
-    {file = "jupyter_client-8.2.0-py3-none-any.whl", hash = "sha256:b18219aa695d39e2ad570533e0d71fb7881d35a873051054a84ee2a17c4b7389"},
-    {file = "jupyter_client-8.2.0.tar.gz", hash = "sha256:9fe233834edd0e6c0aa5f05ca2ab4bdea1842bfd2d8a932878212fc5301ddaf0"},
+    {file = "jupyter_client-8.3.0-py3-none-any.whl", hash = "sha256:7441af0c0672edc5d28035e92ba5e32fadcfa8a4e608a434c228836a89df6158"},
+    {file = "jupyter_client-8.3.0.tar.gz", hash = "sha256:3af69921fe99617be1670399a0b857ad67275eefcfa291e2c81a160b7b650f5f"},
 ]
 jupyter-core = [
     {file = "jupyter_core-5.3.1-py3-none-any.whl", hash = "sha256:ae9036db959a71ec1cac33081eeb040a79e681f08ab68b0883e9a676c7a90dce"},
@@ -1684,8 +1684,8 @@ pkgutil-resolve-name = [
     {file = "pkgutil_resolve_name-1.3.10.tar.gz", hash = "sha256:357d6c9e6a755653cfd78893817c0853af365dd51ec97f3d358a819373bbd174"},
 ]
 platformdirs = [
-    {file = "platformdirs-3.7.0-py3-none-any.whl", hash = "sha256:cfd065ba43133ff103ab3bd10aecb095c2a0035fcd1f07217c9376900d94ba07"},
-    {file = "platformdirs-3.7.0.tar.gz", hash = "sha256:87fbf6473e87c078d536980ba970a472422e94f17b752cfad17024c18876d481"},
+    {file = "platformdirs-3.8.0-py3-none-any.whl", hash = "sha256:ca9ed98ce73076ba72e092b23d3c93ea6c4e186b3f1c3dad6edd98ff6ffcca2e"},
+    {file = "platformdirs-3.8.0.tar.gz", hash = "sha256:b0cabcb11063d21a0b261d557acb0a9d2126350e63b70cdf7db6347baea456dc"},
 ]
 prompt-toolkit = [
     {file = "prompt_toolkit-3.0.38-py3-none-any.whl", hash = "sha256:45ea77a2f7c60418850331366c81cf6b5b9cf4c7fd34616f733c5427e6abbb1f"},
