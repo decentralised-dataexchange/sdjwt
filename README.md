@@ -11,14 +11,14 @@
 <p align="center">
   <a href="#about">About</a> •
   <a href="#release-status">Release Status</a> •
-    <a href="#instructions-to-run">Release Status</a> •
+    <a href="#instructions-to-run">Instructions to run</a> •
   <a href="#contributing">Contributing</a> •
   <a href="#licensing">Licensing</a>
 </p>
 
 ## About
 
-This repository will host the specifications and SW code for contributions to [EWC consortium](https://eudiwalletconsortium.org/). 
+This repository will host shareable SW code for contributions to [EWC consortium](https://eudiwalletconsortium.org/). 
 
 ## Release Status
 
