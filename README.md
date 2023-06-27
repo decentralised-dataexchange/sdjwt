@@ -18,7 +18,7 @@
 
 ## About
 
-This repository will host shareable SW code for contributions to [EWC consortium](https://eudiwalletconsortium.org/). 
+This repository will host shareable SW code for contributions to [EWC consortium](https://eudiwalletconsortium.org/). Currently, it hosts code towards SD-JWT implementations as an issuer, holder and verifier of Type 1 credentials.
 
 ## Release Status
 
