@@ -1,5 +1,5 @@
 <h1 align="center">
-    EWC (European Wallet Consortium) Contributions
+    EWC (European Wallet Consortium) Contributions (SD-JWT Issue-Hold-Verify scenarios)
 </h1>
 
 <p align="center">
@@ -18,7 +18,7 @@
 
 ## About
 
-This repository will host shareable SW code for contributions to [EWC consortium](https://eudiwalletconsortium.org/). Currently, it hosts code towards SD-JWT implementations as an issuer, holder and verifier of Type 1 credentials.
+This repository will host shareable SW code for contributions to [EWC consortium](https://eudiwalletconsortium.org/). Currently, it hosts code towards SD-JWT implementations as an issuer, holder and verifier of Type 1 credentials as per the [ARF](https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework).
 
 ## Release Status
 
