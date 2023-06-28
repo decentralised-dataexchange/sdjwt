@@ -1,6 +1,9 @@
 <h1 align="center">
-    EWC (European Wallet Consortium) Contributions (SD-JWT Issue-Hold-Verify scenarios)
+    EWC (European Wallet Consortium) Contributions
 </h1>
+<h2 align="center">
+SD-JWT Issuer-Holder-Verifier scenarios
+</h2>
 
 <p align="center">
     <a href="/../../commits/" title="Last Commit"><img src="https://img.shields.io/github/last-commit/decentralised-dataexchange/ewc?style=flat"></a>
