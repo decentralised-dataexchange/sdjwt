@@ -1,8 +1,8 @@
 <h1 align="center">
-    EWC (European Wallet Consortium) Contributions
+    SD-JWT Playground
 </h1>
 <h2 align="center">
-SD-JWT Issuer-Holder-Verifier scenarios
+SD-JWT Issuer-Holder-Verifier scenarios (Developed part of EWC)
 </h2>
 
 <p align="center">
