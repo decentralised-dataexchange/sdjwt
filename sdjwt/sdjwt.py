@@ -1,9 +1,13 @@
 from jwcrypto import jwk, jwt
 import typing
 import time
+import json
 from datetime import datetime, timedelta
 from sdjwt.didkey import DIDKey
+from secrets import token_hex
 import pytz
+import hashlib
+import base64
 
 
 def get_current_datetime_in_epoch_seconds_and_iso8601_format(
@@ -158,3 +162,29 @@ async def generate_did_key_from_seed(
     crypto_seed_bytes = crypto_seed.encode("utf-8")
     key_did = DIDKey(seed=crypto_seed_bytes)
     return key_did
+
+
+def create_sd_from_disclosure_base64(disclosure_base64: str) -> str:
+    hash_digest = hashlib.sha256(
+        disclosure_base64.encode("utf-8")
+    ).digest()
+    hash_base64 = base64.urlsafe_b64encode(
+        hash_digest
+    ).rstrip(b"=").decode("utf-8")
+    return hash_base64
+
+
+def create_random_salt(length: int) -> str:
+    return token_hex(length)
+
+
+def create_disclosure_base64(random_salt: str, key: str, value: str) -> str:
+    disclosure = [random_salt, key, value]
+    disclosure_json = json.dumps(
+        disclosure,
+        separators=(",", ":")
+    )
+    disclosure_base64 = base64.urlsafe_b64encode(
+        disclosure_json.encode("utf-8")
+    ).rstrip(b"=").decode("utf-8")
+    return disclosure_base64
