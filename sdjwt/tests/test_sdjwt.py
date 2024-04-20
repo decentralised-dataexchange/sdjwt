@@ -1,6 +1,8 @@
 import unittest
 from unittest import IsolatedAsyncioTestCase
-from sdjwt.sdjwt import generate_did_key_from_seed, create_w3c_vc_jwt
+from sdjwt.sdjwt import generate_did_key_from_seed, create_w3c_vc_jwt, create_sd_jwt_for_flat_passport, create_sd_jwt_for_w3c_vc_passport
+import jwt
+import json
 
 
 class Test(IsolatedAsyncioTestCase):
@@ -45,7 +47,26 @@ class Test(IsolatedAsyncioTestCase):
         ~WyI0YjJkY2ViYmQ4MzUyOTBlNTk2Y2NkNzY3NGRmYTE2ZCIsImNvdW50cnkiLCJJTiJd
 
         """
-        raise NotImplementedError("error")
+
+        crypto_seed = "helloworld"
+        key_did = await generate_did_key_from_seed(crypto_seed)
+        key_did.generate()
+        sd_jwt = create_sd_jwt_for_flat_passport(didkey=key_did)
+
+        condition1 = len(sd_jwt) > 0
+        self.assert_(condition1, "SD-JWT is empty")
+        condition2 = len(sd_jwt.split(".")) == 3
+        self.assert_(condition2, "SD-JWT doesn't contain one of header/claims/signature or all")
+        condition3 = len(sd_jwt.split("~")) == 5
+        self.assert_(condition3, "SD-JWT doesn't contain all of the disclosures")
+
+        _, claims, _ = sd_jwt.split(".")
+        decoded_claims = jwt.utils.base64url_decode(claims.encode()).decode("utf-8")
+        decoded_claims = json.loads(decoded_claims)
+
+        self.assertIn("_sd",decoded_claims,"SD-JWT doesn't contain `_sd`")
+        condition6 = len(decoded_claims["_sd"]) == 4
+        self.assert_(condition6, "VC doesn't contain all of the digest of disclosures")
 
     async def test_create_sd_jwt_for_w3c_vc_passport(self):
         """
@@ -87,7 +108,30 @@ class Test(IsolatedAsyncioTestCase):
         Disclosures is as below ...
 
         """
-        raise NotImplementedError("error")
+        crypto_seed = "helloworld"
+        key_did = await generate_did_key_from_seed(crypto_seed)
+        key_did.generate()
+        vc = create_sd_jwt_for_w3c_vc_passport(didkey=key_did)
+        
+        condition1 = len(vc) > 0
+        self.assert_(condition1, "VC is empty")
+        condition2 = len(vc.split(".")) == 3
+        self.assert_(condition2, "VC doesn't contain one of header/claims/signature or all")
+        condition3 = len(vc.split("~")) == 5
+        self.assert_(condition3, "VC doesn't contain all of the disclosures")
+
+        _, claims, _ = vc.split(".")
+        decoded_claims = jwt.utils.base64url_decode(claims.encode()).decode("utf-8")
+        decoded_claims = json.loads(decoded_claims)
+
+        condition4 = decoded_claims["vc"]["type"][0] == "Passport"
+        self.assert_(condition4, "VC doesn't contain type as `Passport`")
+        self.assertIn("_sd",decoded_claims["vc"]["credentialSubject"],"VC doesn't contain `_sd` in credentialSubject")
+        condition6 = len(decoded_claims["vc"]["credentialSubject"]["_sd"]) == 4
+        self.assert_(condition6, "VC doesn't contain all of the digest of disclosures")
+
+
+        
 
 if __name__ == "__main__":
     unittest.main()
