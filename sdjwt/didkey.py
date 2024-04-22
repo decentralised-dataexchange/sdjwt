@@ -9,7 +9,6 @@ from multiformats import multibase, multicodec
 
 
 class DIDKey:
-
     def __init__(self, seed):
         self.private_key = None
         self.public_key = None
@@ -18,9 +17,7 @@ class DIDKey:
     def _create_keypair(self, seed):
         curve = ec.SECP256R1()
         private_key = ec.derive_private_key(
-            int.from_bytes(seed, "big"),
-            curve,
-            default_backend()
+            int.from_bytes(seed, "big"), curve, default_backend()
         )
         public_key = private_key.public_key()
         private_key_jwk = jwk.JWK.from_pem(
@@ -42,20 +39,14 @@ class DIDKey:
 
     def generate(self) -> typing.Tuple[str, str]:
         if not self.public_key:
-            raise Exception(
-                "Keypair must be created before generating the DID"
-            )
+            raise Exception("Keypair must be created before generating the DID")
         # Convert jwk to json with whitespace eliminated
         jwk_json = json.dumps(
-            self.public_key.export(as_dict=True),
-            separators=(",", ":")
+            self.public_key.export(as_dict=True), separators=(",", ":")
         )
         # multicodec wrap the utf-8 encoded bytes
         # with jwk_jcs-pub (0xeb51) codec identifier
-        jwk_multicodec = multicodec.wrap(
-            "jwk_jcs-pub",
-            jwk_json.encode("utf-8")
-        )
+        jwk_multicodec = multicodec.wrap("jwk_jcs-pub", jwk_json.encode("utf-8"))
         # multibase base58-btc encode the jwk_multicodec bytes
         method_specific_id = multibase.encode(jwk_multicodec, "base58btc")
         # prefix the method specific id with 'did:key:'
