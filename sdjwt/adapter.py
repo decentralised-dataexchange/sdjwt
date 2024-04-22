@@ -36,7 +36,7 @@ class DataAttributesAdapter:
     def to_credential(self):
         credential = {}
         for data_attribute in self.data_attributes:
-            layers = data_attribute.name.split('.')
+            layers = data_attribute.name.split(".")
             current_dict = credential
             for part in layers[:-1]:
                 if part not in current_dict:
@@ -56,15 +56,20 @@ class DataAttributesAdapter:
         return cls(data_attributes)
 
     @staticmethod
-    def _from_json_schema(data: dict, prefix=''):
+    def _from_json_schema(data: dict, prefix=""):
         data_attributes = []
         for key, value in data.items():
             if isinstance(value, dict):
                 if value["type"] == "object":
                     data_attributes.extend(
-                        DataAttributesAdapter._from_json_schema(value["properties"], f"{prefix}{key}."))
+                        DataAttributesAdapter._from_json_schema(
+                            value["properties"], f"{prefix}{key}."
+                        )
+                    )
                 else:
-                    attribute = DataAttribute(name=f"{prefix}{key}", data_type=value["type"])
+                    attribute = DataAttribute(
+                        name=f"{prefix}{key}", data_type=value["type"]
+                    )
                     data_attributes.append(attribute)
             else:
                 attribute = DataAttribute(name=f"{prefix}{key}", data_type=value)
@@ -84,14 +89,18 @@ class DataAttributesAdapter:
             return "number"
 
     @staticmethod
-    def _from_credential(data: dict, prefix=''):
+    def _from_credential(data: dict, prefix=""):
         data_attributes = []
         for key, value in data.items():
             if isinstance(value, dict):
-                data_attributes.extend(DataAttributesAdapter._from_credential(value, f"{prefix}{key}."))
+                data_attributes.extend(
+                    DataAttributesAdapter._from_credential(value, f"{prefix}{key}.")
+                )
             else:
-                attribute = DataAttribute(name=f"{prefix}{key}", value=value,
-                                          data_type=DataAttributesAdapter._detect_json_schema_type(value))
+                attribute = DataAttribute(
+                    name=f"{prefix}{key}",
+                    value=value,
+                    data_type=DataAttributesAdapter._detect_json_schema_type(value),
+                )
                 data_attributes.append(attribute)
         return data_attributes
-

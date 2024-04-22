@@ -11,7 +11,7 @@ import base64
 
 
 def get_current_datetime_in_epoch_seconds_and_iso8601_format(
-    delta_in_seconds=0
+    delta_in_seconds=0,
 ) -> typing.Tuple[int, str]:
     # Get the current date and time in UTC
     now = datetime.now(pytz.UTC)
@@ -21,9 +21,7 @@ def get_current_datetime_in_epoch_seconds_and_iso8601_format(
     iso_8601_datetime = incremented_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
     # Calculate the UTC epoch seconds
     epoch_seconds = int(
-        (
-            incremented_datetime - datetime(1970, 1, 1, tzinfo=pytz.UTC)
-        ).total_seconds()
+        (incremented_datetime - datetime(1970, 1, 1, tzinfo=pytz.UTC)).total_seconds()
     )
     return epoch_seconds, iso_8601_datetime
 
@@ -44,7 +42,7 @@ def create_jwt(
     vc: typing.Union[dict, None] = None,
     iat: typing.Union[int, None] = None,
     exp: typing.Union[int, None] = None,
-    **kwargs
+    **kwargs,
 ) -> str:
     header = {"typ": "JWT", "alg": get_alg_for_key(key), "kid": kid}
 
@@ -58,7 +56,7 @@ def create_jwt(
         "exp": exp,
         "sub": sub,
         "iss": iss,
-        **kwargs
+        **kwargs,
     }
     if vc:
         claims["vc"] = vc
@@ -84,9 +82,11 @@ def create_vc_jwt(
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
 ) -> str:
     expiry_in_seconds = 3600
-    issuance_epoch, issuance_8601 = get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    expiration_epoch, expiration_8601 = get_current_datetime_in_epoch_seconds_and_iso8601_format(
-        expiry_in_seconds
+    issuance_epoch, issuance_8601 = (
+        get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    )
+    expiration_epoch, expiration_8601 = (
+        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
     )
     vc = {
         "@context": credential_context,
@@ -127,11 +127,7 @@ def create_w3c_vc_jwt(didkey: DIDKey):
             "type": "FullJsonSchemaValidator2021",
         }
     ]
-    credential_subject = {
-        "id": "did:key:datawallet_did",
-        "name": "Jane Doe",
-        "age": 22
-    }
+    credential_subject = {"id": "did:key:datawallet_did", "name": "Jane Doe", "age": 22}
 
     kid = "did:key:issuer_did#issuer_did"
     jti = credential_id
@@ -165,12 +161,8 @@ async def generate_did_key_from_seed(
 
 
 def create_sd_from_disclosure_base64(disclosure_base64: str) -> str:
-    hash_digest = hashlib.sha256(
-        disclosure_base64.encode("utf-8")
-    ).digest()
-    hash_base64 = base64.urlsafe_b64encode(
-        hash_digest
-    ).rstrip(b"=").decode("utf-8")
+    hash_digest = hashlib.sha256(disclosure_base64.encode("utf-8")).digest()
+    hash_base64 = base64.urlsafe_b64encode(hash_digest).rstrip(b"=").decode("utf-8")
     return hash_base64
 
 
@@ -180,13 +172,12 @@ def create_random_salt(length: int) -> str:
 
 def create_disclosure_base64(random_salt: str, key: str, value: str) -> str:
     disclosure = [random_salt, key, value]
-    disclosure_json = json.dumps(
-        disclosure,
-        separators=(",", ":")
+    disclosure_json = json.dumps(disclosure, separators=(",", ":"))
+    disclosure_base64 = (
+        base64.urlsafe_b64encode(disclosure_json.encode("utf-8"))
+        .rstrip(b"=")
+        .decode("utf-8")
     )
-    disclosure_base64 = base64.urlsafe_b64encode(
-        disclosure_json.encode("utf-8")
-    ).rstrip(b"=").decode("utf-8")
     return disclosure_base64
 
 
@@ -234,7 +225,7 @@ def create_sd_jwt_for_flat_passport(didkey: DIDKey):
         key=didkey.private_key,
         iat=issuance_epoch,
         exp=expiration_epoch,
-        **jwt_payload
+        **jwt_payload,
     )
 
     _sd_string = "~" + "~".join(disclosures)
@@ -348,6 +339,3 @@ def create_sd_jwt_for_w3c_vc_passport(didkey: DIDKey):
     )
 
     return to_be_issued_credential
-
-
-
