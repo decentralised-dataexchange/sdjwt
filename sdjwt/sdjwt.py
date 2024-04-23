@@ -66,7 +66,7 @@ def create_jwt(
     return token.serialize()
 
 
-def create_vc_jwt(
+def create_w3c_vc_jwt(
     jti: str,
     iss: str,
     sub: str,
@@ -117,41 +117,6 @@ def create_vc_jwt(
     )
 
 
-def create_w3c_vc_jwt(didkey: DIDKey):
-    credential_id = "urn:did:abc"
-    credential_type = ["Passport"]
-    credential_context = ["https://www.w3.org/2018/credentials/v1"]
-    credential_schema = [
-        {
-            "id": "https://api-conformance.ebsi.eu/trusted-schemas-registry/v2/schemas/z3MgUFUkb722uq4x3dv5yAJmnNmzDFeK5UC8x83QoeLJM",
-            "type": "FullJsonSchemaValidator2021",
-        }
-    ]
-    credential_subject = {"id": "did:key:datawallet_did", "name": "Jane Doe", "age": 22}
-
-    kid = "did:key:issuer_did#issuer_did"
-    jti = credential_id
-    iss = "did:key:issuer_did"
-    sub = "did:key:datawallet_did"
-    to_be_issued_credential = create_vc_jwt(
-        credential_id=credential_id,
-        credential_type=credential_type,
-        credential_context=credential_context,
-        credential_subject=credential_subject,
-        credential_status=None,
-        terms_of_use=None,
-        credential_schema=credential_schema,
-        kid=kid,
-        jti=jti,
-        iss=iss,
-        sub=sub,
-        key=didkey.private_key,
-        credential_issuer=didkey.generate()[0],
-    )
-
-    return to_be_issued_credential
-
-
 async def generate_did_key_from_seed(
     crypto_seed: str,
 ) -> DIDKey:
@@ -181,51 +146,39 @@ def create_disclosure_base64(random_salt: str, key: str, value: str) -> str:
     return disclosure_base64
 
 
-def create_sd_jwt_for_flat_passport(didkey: DIDKey):
-    credential_id = "urn:did:abc"
-    kid = "did:key:issuer_did#issuer_did"
-    jti = credential_id
-    iss = "did:key:issuer_did"
-    sub = "did:key:datawallet_did"
-
-    expiry_in_seconds = 3600
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
-    passport_claims = {
-        "name": "Jane Doe",
-        "address": "Kochi",
-        "age": 22,
-        "country": "IN",
-    }
+def create_flat_sd_jwt(
+    jti: str,
+    iss: str,
+    sub: str,
+    kid: str,
+    key: jwk.JWK,
+    credential_subject: dict,
+    iat: typing.Union[int, None] = None,
+    exp: typing.Union[int, None] = None,
+) -> str:
 
     _sd = []
     disclosures = []
-    for key, value in passport_claims.items():
+    for name, value in credential_subject.items():
         disclosure_base64 = None
         disclosure_base64 = create_disclosure_base64(
-            create_random_salt(32), key=key, value=value
+            create_random_salt(32), key=name, value=value
         )
         sd = create_sd_from_disclosure_base64(disclosure_base64)
         disclosures.append(disclosure_base64)
         _sd.append(sd)
 
-    sd_object = {"_sd": _sd}
-
-    jwt_payload = {**passport_claims, **sd_object}
+    sd_payload = {"_sd": _sd}
 
     vc_jwt = create_jwt(
         jti=jti,
         sub=sub,
         iss=iss,
         kid=kid,
-        key=didkey.private_key,
-        iat=issuance_epoch,
-        exp=expiration_epoch,
-        **jwt_payload,
+        key=key,
+        iat=iat,
+        exp=exp,
+        **sd_payload,
     )
 
     _sd_string = "~" + "~".join(disclosures)
@@ -234,7 +187,7 @@ def create_sd_jwt_for_flat_passport(didkey: DIDKey):
     return sd_jwt
 
 
-def create_vc_sd_jwt(
+def create_w3c_vc_sd_jwt(
     jti: str,
     iss: str,
     sub: str,
@@ -267,7 +220,8 @@ def create_vc_sd_jwt(
         disclosures.append(disclosure_base64)
         _sd.append(sd)
 
-    credential_subject["_sd"] = _sd
+    sd_payload = {"_sd": _sd}
+
     vc = {
         "@context": credential_context,
         "id": credential_id,
@@ -277,7 +231,7 @@ def create_vc_sd_jwt(
         "validFrom": issuance_8601,
         "expirationDate": expiration_8601,
         "issued": issuance_8601,
-        "credentialSubject": credential_subject,
+        "credentialSubject": sd_payload,
     }
     if credential_schema:
         vc["credentialSchema"] = credential_schema
@@ -301,41 +255,4 @@ def create_vc_sd_jwt(
     return jwt_credential + sd_disclosures
 
 
-def create_sd_jwt_for_w3c_vc_passport(didkey: DIDKey):
-    credential_id = "urn:did:abc"
-    credential_type = ["Passport"]
-    credential_context = ["https://www.w3.org/2018/credentials/v1"]
-    credential_schema = [
-        {
-            "id": "https://api-conformance.ebsi.eu/trusted-schemas-registry/v2/schemas/z3MgUFUkb722uq4x3dv5yAJmnNmzDFeK5UC8x83QoeLJM",
-            "type": "FullJsonSchemaValidator2021",
-        }
-    ]
-    credential_subject = {
-        "name": "Jane Doe",
-        "address": "Kochi",
-        "age": 22,
-        "country": "IN",
-    }
 
-    kid = "did:key:issuer_did#issuer_did"
-    jti = credential_id
-    iss = "did:key:issuer_did"
-    sub = "did:key:datawallet_did"
-    to_be_issued_credential = create_vc_sd_jwt(
-        credential_id=credential_id,
-        credential_type=credential_type,
-        credential_context=credential_context,
-        credential_subject=credential_subject,
-        credential_status=None,
-        terms_of_use=None,
-        credential_schema=credential_schema,
-        kid=kid,
-        jti=jti,
-        iss=iss,
-        sub=sub,
-        key=didkey.private_key,
-        credential_issuer=didkey.generate()[0],
-    )
-
-    return to_be_issued_credential
