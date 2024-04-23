@@ -1,9 +1,13 @@
 [tool.poetry]
-name = "ewc"
+name = "sdjwt"
 version = "0.1.0"
 description = ""
 authors = ["George J Padayatti <george.padayatti@igrant.io>"]
 readme = "README.md"
+packages = [
+    { include = "sdjwt" },
+]
+
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.11"
