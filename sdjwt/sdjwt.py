@@ -4,10 +4,12 @@ import time
 import json
 from datetime import datetime, timedelta
 from sdjwt.didkey import DIDKey
+from sdjwt.adapter import DataAttribute, DataAttributesAdapter
 from secrets import token_hex
 import pytz
 import hashlib
 import base64
+from jsonpath_ng import jsonpath, parse
 
 
 def get_current_datetime_in_epoch_seconds_and_iso8601_format(
@@ -156,7 +158,6 @@ def create_flat_sd_jwt(
     iat: typing.Union[int, None] = None,
     exp: typing.Union[int, None] = None,
 ) -> str:
-
     _sd = []
     disclosures = []
     for name, value in credential_subject.items():
@@ -255,4 +256,146 @@ def create_w3c_vc_sd_jwt(
     return jwt_credential + sd_disclosures
 
 
+def create_w3c_vc_sd_jwt_for_data_attributes(
+    jti: str,
+    iss: str,
+    sub: str,
+    kid: str,
+    key: jwk.JWK,
+    credential_issuer: str,
+    credential_id: str,
+    credential_type: typing.List[str],
+    credential_context: typing.List[str],
+    data_attributes: typing.List[DataAttribute],
+    credential_schema: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
+    credential_status: typing.Optional[dict] = None,
+    terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
+    limited_disclosure: bool = True,
+):
+    expiry_in_seconds = 3600
+    issuance_epoch, issuance_8601 = (
+        get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    )
+    expiration_epoch, expiration_8601 = (
+        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
+    )
 
+    vc = {
+        "@context": credential_context,
+        "id": credential_id,
+        "type": credential_type,
+        "issuer": credential_issuer,
+        "issuanceDate": issuance_8601,
+        "validFrom": issuance_8601,
+        "expirationDate": expiration_8601,
+        "issued": issuance_8601,
+    }
+
+    sd_disclosures = ""
+    if limited_disclosure:
+        disclosures = []
+        adapter = DataAttributesAdapter(data_attributes=data_attributes)
+
+        # Create a copy and modifications are done to it.
+        credentialSubject = adapter.to_credential()
+        tempCredentialSubject = adapter.to_credential()
+        for data_attribute in data_attributes:
+            _sd = []
+            if data_attribute.limited_disclosure:
+                child_jp = parse(data_attribute.name)
+
+                # Create disclosure from jsonpath matches
+                for match in child_jp.find(credentialSubject):
+                    name = str(match.path)
+                    value = match.value
+                    disclosure_base64 = None
+                    disclosure_base64 = create_disclosure_base64(
+                        create_random_salt(32),
+                        key=name,
+                        value=value,
+                    )
+                    sd = create_sd_from_disclosure_base64(disclosure_base64)
+                    disclosures.append(disclosure_base64)
+                    _sd.append(sd)
+
+                    # To add _sd array in to previous node.
+                    parent_paths = data_attribute.name.split(".")
+                    if len(parent_paths) > 1:
+                        parent_path = (
+                            ".".join(parent_paths[:-1])
+                            if len(parent_paths) > 1
+                            else data_attribute.name
+                        )
+                        parent_jp = parse(parent_path)
+                        for parent_match in parent_jp.find(tempCredentialSubject):
+                            # if _sd array is present, then extend it
+                            if parent_match.value.get("_sd"):
+                                # Kick out the field marked as limited disclosure
+                                del parent_match.value[str(match.path)]
+                                parent_match.value["_sd"].extend(_sd)
+                                parent_jp.update(
+                                    tempCredentialSubject,
+                                    parent_match.value,
+                                )
+                            else:
+                                parent_match.value["_sd"] = _sd
+                                # Kick out the field marked as limited disclosure
+                                del parent_match.value[str(match.path)]
+                                parent_jp.update(
+                                    tempCredentialSubject, parent_match.value
+                                )
+                    else:
+                        # Kick out the field marked as limited disclosure
+                        del tempCredentialSubject[str(match.path)]
+                        if tempCredentialSubject.get("_sd"):
+                            tempCredentialSubject["_sd"].extend(_sd)
+                        else:
+                            tempCredentialSubject["_sd"] = _sd
+            else:
+                child_jp = parse(data_attribute.name)
+                for match in child_jp.find(credentialSubject):
+                    # To add in to previous node.
+                    parent_paths = data_attribute.name.split(".")
+                    if len(parent_paths) > 1:
+                        parent_path = (
+                            ".".join(parent_paths[:-1])
+                            if len(parent_paths) > 1
+                            else data_attribute.name
+                        )
+                        parent_jp = parse(parent_path)
+                        for parent_match in parent_jp.find(tempCredentialSubject):
+                            # if _sd array is present, the add
+                            # data attribute as a separate key in the dict
+                            if parent_match.value.get("_sd"):
+                                parent_match.value[str(match.path)] = match.value
+                                parent_jp.update(
+                                    tempCredentialSubject,
+                                    parent_match.value,
+                                )
+
+        vc["credentialSubject"] = tempCredentialSubject
+        if (len(disclosures) > 0):
+            sd_disclosures = "~" + "~".join(disclosures)
+    else:
+        t = DataAttributesAdapter(data_attributes=data_attributes)
+        vc["credentialSubject"] = t.to_credential()
+
+    if credential_schema:
+        vc["credentialSchema"] = credential_schema
+    if credential_status:
+        vc["credentialStatus"] = credential_status
+    if terms_of_use:
+        vc["termsOfUse"] = terms_of_use
+
+    jwt_credential = create_jwt(
+        vc=vc,
+        jti=jti,
+        sub=sub,
+        iss=iss,
+        kid=kid,
+        key=key,
+        iat=issuance_epoch,
+        exp=expiration_epoch,
+    )
+
+    return jwt_credential + sd_disclosures

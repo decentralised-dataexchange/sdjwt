@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sdjwt"
-version = "0.1.0"
+version = "2024.4.2"
 description = ""
 authors = ["George J Padayatti <george.padayatti@igrant.io>"]
 readme = "README.md"
@@ -14,6 +14,7 @@ python = ">=3.8.1,<3.11"
 eudi-wallet = "0.0.1"
 jwcrypto = "^1.5.0"
 pytz = "^2024.1"
+jsonpath-ng = "^1.6.1"
 
 
 [tool.poetry.group.dev.dependencies]
