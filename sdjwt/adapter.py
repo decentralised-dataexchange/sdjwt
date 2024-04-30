@@ -7,7 +7,7 @@ from dataclasses import dataclass
 class DataAttribute:
     name: str
     description: str = ""
-    limited_disclosure: bool = False
+    limited_disclosure: typing.Optional[bool] = False
     data_type: str = "string"
     value: any = None
 
