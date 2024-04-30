@@ -52,3 +52,11 @@ class DIDKey:
         # prefix the method specific id with 'did:key:'
         did = f"did:key:{method_specific_id}"
         return did, method_specific_id
+
+    @staticmethod
+    def method_specific_identifier_to_jwk(method_specific_identifier: str) -> jwk.JWK:
+        decoded = multibase.decode(method_specific_identifier)
+        _, raw_data = multicodec.unwrap(decoded)
+        jwk_str = raw_data.decode("utf-8")
+        jwk_dict = json.loads(jwk_str)
+        return jwk.JWK(**jwk_dict)
