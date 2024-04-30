@@ -270,7 +270,7 @@ def create_w3c_vc_sd_jwt_for_data_attributes(
     credential_schema: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     credential_status: typing.Optional[dict] = None,
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
-    limited_disclosure: bool = True,
+    limited_disclosure: typing.Optional[bool] = None,
 ):
     expiry_in_seconds = 3600
     issuance_epoch, issuance_8601 = (
@@ -292,7 +292,7 @@ def create_w3c_vc_sd_jwt_for_data_attributes(
     }
 
     sd_disclosures = ""
-    if limited_disclosure:
+    if limited_disclosure is None:
         disclosures = []
         adapter = DataAttributesAdapter(data_attributes=data_attributes)
 
@@ -377,8 +377,25 @@ def create_w3c_vc_sd_jwt_for_data_attributes(
         if (len(disclosures) > 0):
             sd_disclosures = "~" + "~".join(disclosures)
     else:
-        t = DataAttributesAdapter(data_attributes=data_attributes)
-        vc["credentialSubject"] = t.to_credential()
+        if limited_disclosure:
+            disclosures = []
+            _sd = []
+            adapter = DataAttributesAdapter(data_attributes=data_attributes)
+            credentialSubject = adapter.to_credential()
+            for name, value in credentialSubject.items():
+                disclosure_base64 = None
+                disclosure_base64 = create_disclosure_base64(
+                    create_random_salt(32), key=name, value=value
+                )
+                sd = create_sd_from_disclosure_base64(disclosure_base64)
+                disclosures.append(disclosure_base64)
+                _sd.append(sd)
+            if (len(disclosures) > 0):
+                sd_disclosures = "~" + "~".join(disclosures)
+            vc["credentialSubject"] = {"_sd": _sd}
+        else:
+            t = DataAttributesAdapter(data_attributes=data_attributes)
+            vc["credentialSubject"] = t.to_credential()
 
     if credential_schema:
         vc["credentialSchema"] = credential_schema
