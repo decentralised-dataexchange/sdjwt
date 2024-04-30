@@ -516,6 +516,8 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
         iat=issuance_epoch,
         exp=expiration_epoch,
     )
-    sd_disclosures = "~" + "~".join(disclosures)
+    sd_disclosures = ""
+    if disclosure_mapping:
+        sd_disclosures = "~" + "~".join(disclosures)
 
     return jwt_credential + sd_disclosures
