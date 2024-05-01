@@ -477,7 +477,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
         def iterate_mapping(obj, path):
             for key, value in obj.items():
                 if isinstance(value, dict):
-                    new_path = path + [key]
+                    new_path = path + [f"'{key}'"]
                     # Check if limitedDisclosure is present or not
                     if "limitedDisclosure" in value and value["limitedDisclosure"]:
                         update_value(_credentialSubject, new_path)
