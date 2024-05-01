@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sdjwt"
-version = "2024.4.6"
+version = "2024.4.7"
 description = ""
 authors = ["George J Padayatti <george.padayatti@igrant.io>"]
 readme = "README.md"
