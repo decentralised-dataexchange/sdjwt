@@ -238,11 +238,22 @@ def validate_and_deserialise_presentation_submission(
 
 def decode_header_and_claims_in_jwt(token: str) -> Tuple[dict, dict]:
     headers_encoded, claims_encoded, _ = token.split(".")
-    claims_decoded = base64.b64decode(claims_encoded + "=" * (-len(claims_encoded) % 4))
-    headers_decoded = base64.b64decode(
-        headers_encoded + "=" * (-len(headers_encoded) % 4)
-    )
-    return (json.loads(headers_decoded), json.loads(claims_decoded))
+    try:
+        claims_decoded = base64.b64decode(
+            claims_encoded + "=" * (-len(claims_encoded) % 4)
+        )
+        headers_decoded = base64.b64decode(
+            headers_encoded + "=" * (-len(headers_encoded) % 4)
+        )
+        return (json.loads(headers_decoded), json.loads(claims_decoded))
+    except Exception:
+        claims_decoded = base64.urlsafe_b64decode(
+            claims_encoded + "=" * (-len(claims_encoded) % 4)
+        )
+        headers_decoded = base64.urlsafe_b64decode(
+            headers_encoded + "=" * (-len(claims_encoded) % 4)
+        )
+        return (json.loads(headers_decoded), json.loads(claims_decoded))
 
 
 class VpTokenExpiredError(Exception):
