@@ -1,8 +1,8 @@
 <h1 align="center">
-    SD-JWT Playground
+    SD-JWT
 </h1>
 <h2 align="center">
-SD-JWT Issuer-Holder-Verifier scenarios (Developed part of EWC)
+SD-JWT Issuer-Holder-Verifier scenarios (Developed as part of EWC)
 </h2>
 
 <p align="center">
@@ -26,6 +26,14 @@ This repository will host shareable SW code for contributions to [EWC consortium
 ## Release Status
 
 Ongoing work during 2023-2024
+
+## Installation
+
+sdjwt can be installed (preferably in a `virtualenv`) using `poetry` as follows:
+
+```bash
+   $ poetry add git+ssh://git@github.com:decentralised-dataexchange/sdjwt.git@2024.5.1
+```
 
 ## Instructions to run
 
