@@ -521,3 +521,76 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
         sd_disclosures = "~" + "~".join(disclosures)
 
     return jwt_credential + sd_disclosures
+
+
+def decode_disclosure_base64(disclosure_base64: str):
+    # Add padding back to the base64 string if needed
+    while len(disclosure_base64) % 4 != 0:
+        disclosure_base64 += "="
+
+    # Decode base64 string
+    decoded_bytes = base64.urlsafe_b64decode(disclosure_base64.encode("utf-8"))
+
+    # Decode JSON
+    disclosure_json = decoded_bytes.decode("utf-8")
+    disclosure = json.loads(disclosure_json)
+
+    return disclosure[-2], disclosure[-1]
+
+
+def get_all_disclosures_with_sd_from_token(token: str) -> dict:
+    disclosures = token.split("~")
+    disclosures = disclosures[1:]
+    disclosure_mapping = {}
+    for disclosure in disclosures:
+        sd = create_sd_from_disclosure_base64(disclosure)
+        disclosure_mapping[sd] = disclosure
+    return disclosure_mapping
+
+
+def decode_credential_sd_to_credential_subject(
+    disclosure_mapping: dict, credential_subject: dict
+) -> dict:
+    credential_subject = {"credentialSubject": credential_subject}
+    _credentialSubject = {**credential_subject}
+
+    def replace_sd_with_credential_subject_attributes(sds: list, disclosure: dict):
+        credential_attribute = {}
+        for sd in sds:
+            disclosure_base64 = disclosure.get(sd)
+            key, value = decode_disclosure_base64(disclosure_base64=disclosure_base64)
+            credential_attribute[key] = value
+        return credential_attribute
+
+    def update_value(obj, path, credential_attribute):
+        # Construct json path dot notation
+        dot_notation_path = ".".join(path)
+
+        # Find matches for the json path
+        jp = parse(dot_notation_path)
+        matches = jp.find(obj)
+
+        # Iterate through the matches
+        for match in matches:
+            if isinstance(match.context.value, dict):
+                match.context.value[str(match.path)].pop("_sd")
+                for key, value in credential_attribute.items():
+                    match.context.value[str(match.path)][key] = value
+
+    def iterate_mapping(obj, path):
+        for key, value in obj.items():
+
+            if isinstance(value, dict):
+                new_path = path + [f"'{key}'"]
+                # Check if sd is present or not
+                if "_sd" in value and value["_sd"]:
+                    credential_attribute = (
+                        replace_sd_with_credential_subject_attributes(
+                            value["_sd"], disclosure=disclosure_mapping
+                        )
+                    )
+                    update_value(_credentialSubject, new_path, credential_attribute)
+                iterate_mapping(value, new_path)
+
+    iterate_mapping(credential_subject, [])
+    return credential_subject["credentialSubject"]
