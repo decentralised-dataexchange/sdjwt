@@ -8,6 +8,7 @@ from sdjwt.sdjwt import (
     create_w3c_vc_sd_jwt,
     get_all_disclosures_with_sd_from_token,
     decode_credential_sd_to_credential_subject,
+    create_disclosure_mapping_from_credential_definition,
 )
 import jwt
 import json
@@ -388,6 +389,122 @@ class TestSDJWT(IsolatedAsyncioTestCase):
         self.assert_(
             condition_2,
             "Expected credential subject attribute `section6` doesn't match with result",
+        )
+
+    async def test_create_disclosure_mapping_from_credential_definition(self):
+        # Case 1
+        credential_definition_1 = {
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "object",
+                    "limitDisclosure": False,
+                    "properties": {
+                        "id": {
+                            "type": "object",
+                            "limitDisclosure": True,
+                            "properties": {
+                                "legalName": {
+                                    "type": "string",
+                                    "limitDisclosure": False,
+                                },
+                            },
+                        }
+                    },
+                },
+                "legalName": {"type": "string", "limitDisclosure": False},
+                "legalAddress": {"type": "string", "limitDisclosure": True},
+            },
+            "required": ["identifier", "legalName", "legalAddress"],
+            "additionalProperties": False,
+        }
+        expected_disclosure_mapping_1 = {
+            "credentialSubject": {
+                "identifier": {"id": {"limitDisclosure": True}},
+                "legalAddress": {"limitDisclosure": True},
+            }
+        }
+
+        # Case 2
+
+        credential_definition_2 = {
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "object",
+                    "limitDisclosure": True,
+                    "properties": {
+                        "id": {
+                            "type": "object",
+                            "limitDisclosure": True,
+                            "properties": {
+                                "legalName": {
+                                    "type": "string",
+                                    "limitDisclosure": False,
+                                },
+                            },
+                        }
+                    },
+                },
+                "legalName": {"type": "string", "limitDisclosure": True},
+                "legalAddress": {"type": "string", "limitDisclosure": False},
+            },
+            "required": ["identifier", "legalName", "legalAddress"],
+            "additionalProperties": False,
+        }
+        expected_disclosure_mapping_2 = {
+            "credentialSubject": {
+                "identifier": {"limitDisclosure": True},
+                "legalName": {"limitDisclosure": True},
+            }
+        }
+
+        # Tescase for case 1
+        disclosure_mapping_1 = create_disclosure_mapping_from_credential_definition(
+            credential_definition_1
+        )
+
+        condition_1 = (
+            disclosure_mapping_1["credentialSubject"]['identifier']["id"][
+                "limitDisclosure"
+            ]
+            == expected_disclosure_mapping_1["credentialSubject"]["identifier"]["id"][
+                "limitDisclosure"
+            ]
+        )
+        self.assert_(
+            condition_1,
+            "Expected desclosure mapping for id field doesn't match",
+        )
+        condition_2 = (
+            disclosure_mapping_1["credentialSubject"]["legalAddress"]
+            == expected_disclosure_mapping_1["credentialSubject"]["legalAddress"]
+        )
+        self.assert_(
+            condition_2,
+            "Expected desclosure mapping for legalAddress field doesn't match",
+        )
+
+        # Tescase for case 2
+        disclosure_mapping_2 = create_disclosure_mapping_from_credential_definition(
+            credential_definition_2
+        )
+
+        condition_1 = (
+            disclosure_mapping_2["credentialSubject"]["identifier"]
+            == expected_disclosure_mapping_2["credentialSubject"]["identifier"]
+        )
+        self.assert_(
+            condition_1,
+            "Expected desclosure mapping for identifier field doesn't match",
+        )
+        condition_2 = (
+            disclosure_mapping_2["credentialSubject"]["legalName"]
+            == expected_disclosure_mapping_2["credentialSubject"]["legalName"]
+        )
+        self.assert_(
+            condition_2,
+            "Expected desclosure mapping for legalName field doesn't match",
         )
 
 
