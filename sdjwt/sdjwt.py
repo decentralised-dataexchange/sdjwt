@@ -594,3 +594,24 @@ def decode_credential_sd_to_credential_subject(
 
     iterate_mapping(credential_subject, [])
     return credential_subject["credentialSubject"]
+
+
+def _create_disclosure_mapping_from_credential_definition(data):
+    result = {}
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, dict) and "limitDisclosure" in value and value["limitDisclosure"] is True:
+                # Direct property with limitDisclosure
+                result[key] = {k: v for k, v in value.items() if k == "limitDisclosure"}
+            elif isinstance(value, dict) and "properties" in value:
+                # Nested property, need to go deeper
+                nested_result = _create_disclosure_mapping_from_credential_definition(value["properties"])
+                if nested_result:
+                    result[key] = nested_result
+    return result
+
+def create_disclosure_mapping_from_credential_definition(credential_definition):
+    data = credential_definition["properties"]
+    disclosure_mapping = {}
+    disclosure_mapping["credentialSubject"] = _create_disclosure_mapping_from_credential_definition(data)
+    return disclosure_mapping
