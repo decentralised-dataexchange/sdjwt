@@ -1,10 +1,12 @@
-from jsonschema import exceptions, validate
+from jsonschema import exceptions, validate, ValidationError
 import json
 import base64
-from typing import List, Dict, Union, Optional, Tuple
+from typing import List, Dict, Union, Optional, Tuple, Any
 from pydantic import BaseModel
 from sdjwt.didkey import DIDKey
 from jwcrypto import jwk, jwt
+from jsonpath_ng import jsonpath, parse
+from dataclasses import dataclass
 
 
 class Field(BaseModel):
@@ -306,3 +308,178 @@ def validate_vp_token_against_presentation_submission_and_presentation_definitio
             presentation_submission=presentation_submission
         )
     verify_vp_token(vp_token=vp_token)
+
+
+@dataclass
+class MatchedPath:
+    path: str
+    index: int
+    value: Any
+
+
+@dataclass
+class MatchedField:
+    index: int
+    path: MatchedPath
+
+
+@dataclass
+class MatchedCredential:
+    index: int
+    fields: List[MatchedField]
+
+
+def apply_json_path(input_json_string, path):
+    try:
+        # Parse input JSON string
+        parsed_input = json.loads(input_json_string)
+    except json.JSONDecodeError as e:
+        return None, e
+
+    try:
+        # Parse JSON path string
+        jsonpath_expr = parse(path)
+    except Exception as e:
+        return None, e
+
+    # Apply JSON path on input and get the matches
+    matches = [match.value for match in jsonpath_expr.find(parsed_input)]
+    return matches, None
+
+
+def validate_json_schema(input_json_string, schema_string):
+
+    try:
+        # Parse schema JSON string
+        schema = json.loads(schema_string)
+    except json.JSONDecodeError as e:
+        return e
+
+    try:
+        # Validate JSON schema against the input JSON
+        validate(instance=input_json_string, schema=schema)
+    except ValidationError as e:
+        return e
+
+    return None
+
+
+def match_credentials(
+    input_descriptor_json, credentials
+) -> Tuple[List[MatchedCredential], Optional[Exception]]:
+    # Deserialise input descriptor json string
+    try:
+        descriptor = json.loads(input_descriptor_json)
+    except json.JSONDecodeError as e:
+        return [], e
+
+    # To store the matched credentials
+    matches = []
+
+    # Iterate through each credential
+    for credential_index, credential in enumerate(credentials):
+
+        # Assume credential matches until proven otherwise
+        credential_matched = True
+        matched_fields = []
+
+        # Iterate through fields specified in the constraints
+        for field_index, field in enumerate(descriptor["constraints"]["fields"]):
+
+            # Assume field matches until proven otherwise
+            field_matched = False
+
+            # Iterate through JSON paths for the current field
+            for path_index, path in enumerate(field["path"]):
+
+                # Apply JSON path on the credential
+                path_matches, err = apply_json_path(credential, path)
+
+                if len(path_matches) > 0 and err is None:
+                    if "filter" in field:
+                        try:
+                            filter_bytes = json.dumps(field["filter"])
+                        except (TypeError, ValueError) as e:
+                            # Continue to next path, since filter has failed to serialise
+                            continue
+
+                        # Validate the matched JSON against the field's filter
+                        if (
+                            validate_json_schema(path_matches[0], filter_bytes)
+                            is not None
+                        ):
+                            # Field doesn't match since validation failed
+                            field_matched = False
+                            break
+
+                    # Add the matched field to the list
+                    field_matched = True
+                    matched_fields.append(
+                        MatchedField(
+                            index=field_index,
+                            path=MatchedPath(
+                                path=path, index=path_index, value=path_matches[0]
+                            ),
+                        )
+                    )
+
+            if not field_matched:
+                # If any one field didn't match then move to next credential
+                credential_matched = False
+                break
+
+        if credential_matched:
+            # All fields matched, then credential is matched
+            matches.append(
+                MatchedCredential(index=credential_index, fields=matched_fields)
+            )
+
+    return matches, None
+
+
+def decode_base64(encoded_str):
+    decoded_bytes = base64.urlsafe_b64decode(encoded_str + "==")
+    return json.loads(decoded_bytes.decode("utf-8"))
+
+
+def find_all_sd_values(data):
+    sd_values = []
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if key == "_sd" and isinstance(value, list):
+                sd_values.extend(value)
+            else:
+                sd_values.extend(find_all_sd_values(value))
+    elif isinstance(data, list):
+        for item in data:
+            sd_values.extend(find_all_sd_values(item))
+    return sd_values
+
+
+# Function to extract relevant disclosure values
+def extract_disclosure_values(input_descriptor, credential, disclosure):
+    fields = input_descriptor["constraints"]["fields"]
+    sd_values = find_all_sd_values(credential["credentialSubject"])
+
+    matching_disclosures = []
+    for field in fields:
+        path = field["path"][0]
+        key_to_match = path.split(".")[-1]
+
+        for sd in sd_values:
+            if sd in disclosure:
+                decoded_value = decode_base64(disclosure[sd])
+                if key_to_match == decoded_value[1]:
+                    matching_disclosures.append(disclosure[sd])
+                    break
+
+    return matching_disclosures
+
+
+def update_disclosures_in_token(token: str, disclosures: list) -> str:
+    token_with_disclosures = token.split("~")
+    jwt_token = token_with_disclosures[:1][0]
+    sd_string = "~" + "~".join(disclosures)
+
+    sd_jwt = jwt_token + sd_string
+    return sd_jwt
