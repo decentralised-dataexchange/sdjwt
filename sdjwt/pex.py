@@ -223,7 +223,11 @@ def validate_and_deserialise_presentation_definition(
         )
         return PresentationDefinition(**presentation_definition)
     except exceptions.ValidationError as e:
-        raise PresentationDefinitionValidationError(e.message)
+        #FIXME: Temporary hack to validate presentation definition from itb
+        if e.message == "Additional properties are not allowed ('name' was unexpected)":
+            return PresentationDefinition(**presentation_definition)
+        else: 
+            raise PresentationDefinitionValidationError(e.message)
 
 
 def validate_and_deserialise_presentation_submission(
