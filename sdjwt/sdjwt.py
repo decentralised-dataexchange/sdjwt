@@ -83,7 +83,7 @@ def create_w3c_vc_jwt(
     credential_status: typing.Optional[dict] = None,
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
 ) -> str:
-    expiry_in_seconds = 3600
+    expiry_in_seconds = 2592000
     issuance_epoch, issuance_8601 = (
         get_current_datetime_in_epoch_seconds_and_iso8601_format()
     )
@@ -203,7 +203,7 @@ def create_w3c_vc_sd_jwt(
     credential_status: typing.Optional[dict] = None,
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
 ) -> str:
-    expiry_in_seconds = 3600
+    expiry_in_seconds = 2592000
     issuance_epoch, issuance_8601 = (
         get_current_datetime_in_epoch_seconds_and_iso8601_format()
     )
@@ -272,7 +272,7 @@ def create_w3c_vc_sd_jwt_for_data_attributes(
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     limited_disclosure: typing.Optional[bool] = None,
 ):
-    expiry_in_seconds = 3600
+    expiry_in_seconds = 2592000
     issuance_epoch, issuance_8601 = (
         get_current_datetime_in_epoch_seconds_and_iso8601_format()
     )
@@ -434,7 +434,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     disclosure_mapping: typing.Optional[dict] = None,
 ) -> str:
-    expiry_in_seconds = 3600
+    expiry_in_seconds = 2592000
     issuance_epoch, issuance_8601 = (
         get_current_datetime_in_epoch_seconds_and_iso8601_format()
     )
@@ -539,7 +539,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     disclosure_mapping: typing.Optional[dict] = None,
 ) -> str:
-    expiry_in_seconds = 3600
+    expiry_in_seconds = 2592000
     issuance_epoch, issuance_8601 = (
         get_current_datetime_in_epoch_seconds_and_iso8601_format()
     )
