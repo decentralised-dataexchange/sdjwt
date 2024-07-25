@@ -538,8 +538,10 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     credential_status: typing.Optional[dict] = None,
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     disclosure_mapping: typing.Optional[dict] = None,
+    expiry_in_seconds: typing.Optional[int] = None,
 ) -> str:
-    expiry_in_seconds = 2592000
+    if not expiry_in_seconds:
+        expiry_in_seconds = 2592000
     issuance_epoch, issuance_8601 = (
         get_current_datetime_in_epoch_seconds_and_iso8601_format()
     )
