@@ -267,7 +267,7 @@ def decode_header_and_claims_in_jwt(token: str) -> Tuple[dict, dict]:
             claims_encoded + "=" * (-len(claims_encoded) % 4)
         )
         headers_decoded = base64.urlsafe_b64decode(
-            headers_encoded + "=" * (-len(claims_encoded) % 4)
+            headers_encoded + "=" * (-len(headers_encoded) % 4)
         )
         return (json.loads(headers_decoded), json.loads(claims_decoded))
 
