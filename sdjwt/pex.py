@@ -45,7 +45,11 @@ PresentationDefinitionJsonSchema = {
                     "properties": {
                         "id": {"type": "string"},
                         "optional": {"type": "boolean"},
-                        "path": {"type": "array", "items": {"type": "string"}},
+                        "path": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 1,
+                        },
                         "purpose": {"type": "string"},
                         "name": {"type": "string"},
                         "intent_to_retain": {"type": "boolean"},
@@ -58,7 +62,11 @@ PresentationDefinitionJsonSchema = {
                     "properties": {
                         "id": {"type": "string"},
                         "optional": {"type": "boolean"},
-                        "path": {"type": "array", "items": {"type": "string"}},
+                        "path": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 1,
+                        },
                         "purpose": {"type": "string"},
                         "intent_to_retain": {"type": "boolean"},
                         "filter": {"$ref": "http://json-schema.org/draft-07/schema#"},
