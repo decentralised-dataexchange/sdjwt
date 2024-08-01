@@ -101,6 +101,7 @@ PresentationDefinitionJsonSchema = {
                             "items": {"$ref": "#/definitions/field"},
                         },
                     },
+                    "required": ["fields"],
                 },
             },
             "required": ["id", "constraints"],
@@ -233,10 +234,10 @@ def validate_and_deserialise_presentation_definition(
         )
         return PresentationDefinition(**presentation_definition)
     except exceptions.ValidationError as e:
-        #FIXME: Temporary hack to validate presentation definition from itb
+        # FIXME: Temporary hack to validate presentation definition from itb
         if e.message == "Additional properties are not allowed ('name' was unexpected)":
             return PresentationDefinition(**presentation_definition)
-        else: 
+        else:
             raise PresentationDefinitionValidationError(e.message)
 
 
@@ -273,6 +274,10 @@ def decode_header_and_claims_in_jwt(token: str) -> Tuple[dict, dict]:
 
 
 class VpTokenExpiredError(Exception):
+    pass
+
+
+class VpTokenValidationError(Exception):
     pass
 
 
@@ -322,6 +327,13 @@ def validate_vp_token_against_presentation_submission_and_presentation_definitio
             presentation_submission=presentation_submission
         )
     verify_vp_token(vp_token=vp_token)
+    is_vp_token_validated = validate_vp_token(
+        vp_token=vp_token,
+        presentation_submission=presentation_submission.get("presentation_submission"),
+        presentation_definition=json.dumps(presentation_definition),
+    )
+    if not is_vp_token_validated:
+        raise VpTokenValidationError("Failed to validate vp token")
 
 
 @dataclass
@@ -652,3 +664,91 @@ def match_credentials_for_sd_jwt(
                 )
 
     return matches, None
+
+
+def remove_sd_and_add_disclosure_value(
+    credential_subject, disclosure_key, disclosure_value
+):
+
+    if isinstance(credential_subject, dict):
+        keys_to_modify = list(
+            credential_subject.keys()
+        )  # Create a list of keys to avoid changing the dict during iteration
+        for key in keys_to_modify:
+            value = credential_subject[key]
+            credential_subject[key] = remove_sd_and_add_disclosure_value(
+                value, disclosure_key, disclosure_value
+            )
+            if key == "_sd":
+                if disclosure_key in value:
+                    value.remove(disclosure_key)
+                    attribute_key, attribute_value = decode_disclosure_base64(
+                        disclosure_base64=disclosure_value
+                    )
+                    credential_subject[attribute_key] = attribute_value
+    elif isinstance(credential_subject, list):
+        for i in range(len(credential_subject)):
+            credential_subject[i] = remove_sd_and_add_disclosure_value(
+                credential_subject[i], disclosure_key, disclosure_value
+            )
+    return credential_subject
+
+
+def create_credential_subject_for_sdjwt(credential_subject, disclosure_mapping):
+    for disclosure_key, disclosure_value in disclosure_mapping.items():
+        credential_subject = remove_sd_and_add_disclosure_value(
+            credential_subject=credential_subject,
+            disclosure_key=disclosure_key,
+            disclosure_value=disclosure_value,
+        )
+    return credential_subject
+
+
+def validate_vp_token(
+    vp_token: str,
+    presentation_submission: dict,
+    presentation_definition: dict,
+) -> bool:
+    headers, claims = decode_header_and_claims_in_jwt(vp_token)
+    for descriptor in presentation_submission.get("descriptor_map"):
+        is_verified = False
+        if "path_nested" in descriptor:
+            format = descriptor["format"]
+            path = descriptor["path_nested"]["path"]
+            id = descriptor["id"]
+            # Parse the JSON data
+            jsonpath_expr = parse("$.vp.verifiableCredential[0]")
+            matches = jsonpath_expr.find(claims)
+
+            # Extract the value
+            vc_token = matches[0].value if matches else None
+
+            vc_headers, vc_claims = decode_header_and_claims_in_jwt(vc_token)
+
+            if vc_claims and format == "vc+sd-jwt":
+                disclosure_mapping = get_all_disclosures_with_sd_from_token(vc_token)
+
+                credential_subject = create_credential_subject_for_sdjwt(
+                    credential_subject=vc_claims.get("vc").get("credentialSubject"),
+                    disclosure_mapping=disclosure_mapping,
+                )
+                vc_claims["vc"]["credentialSubject"] = credential_subject
+            elif vc_claims and format == "jwt_vc":
+                pass
+
+            input_descriptors = json.loads(presentation_definition).get(
+                "input_descriptors"
+            )
+            for input_descriptor in input_descriptors:
+                if input_descriptor.get("id") == id:
+                    matches = match_credentials(
+                        json.dumps(input_descriptor),
+                        credentials=[json.dumps(vc_claims["vc"])],
+                    )
+                    if not matches or not matches[0]:
+                        return False
+                    else:
+                        is_verified = True
+        if not is_verified:
+            return False
+    return True
