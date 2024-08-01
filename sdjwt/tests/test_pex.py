@@ -8,6 +8,7 @@ from sdjwt.pex import (
     MatchedPath,
     extract_disclosure_values,
     match_credentials_for_sd_jwt,
+    validate_vp_token,
 )
 
 
@@ -332,6 +333,114 @@ class TestPEX(IsolatedAsyncioTestCase):
         self.assert_(
             condition_2,
             f"Expected matched credential doesn't match with result",
+        )
+
+    async def test_validate_vp_token(self):
+        vp_token = "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticThlY05BQ3RpbWRKakFtYVQ3TDJWR3JKZWlXRXVGeDFkU2ZuUFZTdlBVQUpuaG96bmY0cEp0WHA5czdvWTZMaEJMaHNEQ0VQTkdjTW5pU0F4ODJ3SjNrODNpejduTUFteHRYbXFOWlJTTWRaeWlMQTI4NFZORkJrMzQ3c1BTeUxGTiN6MmRtekQ4MWNnUHg4VmtpN0pidXVNbUZZcldQZ1lveXR5a1VaM2V5cWh0MWo5S2JxOGVjTkFDdGltZEpqQW1hVDdMMlZHckplaVdFdUZ4MWRTZm5QVlN2UFVBSm5ob3puZjRwSnRYcDlzN29ZNkxoQkxoc0RDRVBOR2NNbmlTQXg4MndKM2s4M2l6N25NQW14dFhtcU5aUlNNZFp5aUxBMjg0Vk5GQmszNDdzUFN5TEZOIiwidHlwIjoiSldUIn0.eyJhdWQiOiJodHRwczovL2lncmFudC1pZGVhcGFkLTUtMTVpdGwwNS50YWlsZTE2NWEudHMubmV0L29yZ2FuaXNhdGlvbi9iNTYwMjk5Ni0zMzQwLTQ1ZmMtODI5NS1jZjY2ODIyYzdjN2Qvc2VydmljZSIsImV4cCI6MTcyMjQxMjQzNiwiaWF0IjoxNzIyNDA4ODM2LCJpc3MiOiJkaWQ6a2V5OnoyZG16RDgxY2dQeDhWa2k3SmJ1dU1tRllyV1BnWW95dHlrVVozZXlxaHQxajlLYnE4ZWNOQUN0aW1kSmpBbWFUN0wyVkdySmVpV0V1RngxZFNmblBWU3ZQVUFKbmhvem5mNHBKdFhwOXM3b1k2TGhCTGhzRENFUE5HY01uaVNBeDgyd0ozazgzaXo3bk1BbXh0WG1xTlpSU01kWnlpTEEyODRWTkZCazM0N3NQU3lMRk4iLCJqdGkiOiJ1cm46dXVpZDpjNTQ4MTE2Ny1kMGViLTRiMWItODM5My01YTBjYWM5YjQ5ODYiLCJuYmYiOjE3MjI0MDg4MzYsIm5vbmNlIjoiZjNhNTg1OGYtZmM0Yy00MTY3LTgyNjgtYjdhYzgyY2MwMTkxIiwic3ViIjoiZGlkOmtleTp6MmRtekQ4MWNnUHg4VmtpN0pidXVNbUZZcldQZ1lveXR5a1VaM2V5cWh0MWo5S2JxOGVjTkFDdGltZEpqQW1hVDdMMlZHckplaVdFdUZ4MWRTZm5QVlN2UFVBSm5ob3puZjRwSnRYcDlzN29ZNkxoQkxoc0RDRVBOR2NNbmlTQXg4MndKM2s4M2l6N25NQW14dFhtcU5aUlNNZFp5aUxBMjg0Vk5GQmszNDdzUFN5TEZOIiwidnAiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiXSwiaG9sZGVyIjoiZGlkOmtleTp6MmRtekQ4MWNnUHg4VmtpN0pidXVNbUZZcldQZ1lveXR5a1VaM2V5cWh0MWo5S2JxOGVjTkFDdGltZEpqQW1hVDdMMlZHckplaVdFdUZ4MWRTZm5QVlN2UFVBSm5ob3puZjRwSnRYcDlzN29ZNkxoQkxoc0RDRVBOR2NNbmlTQXg4MndKM2s4M2l6N25NQW14dFhtcU5aUlNNZFp5aUxBMjg0Vk5GQmszNDdzUFN5TEZOIiwiaWQiOiJ1cm46dXVpZDpjNTQ4MTE2Ny1kMGViLTRiMWItODM5My01YTBjYWM5YjQ5ODYiLCJ0eXBlIjpbIlZlcmlmaWFibGVQcmVzZW50YXRpb24iXSwidmVyaWZpYWJsZUNyZWRlbnRpYWwiOlsiZXlKaGJHY2lPaUpGVXpJMU5pSXNJbXRwWkNJNkltUnBaRHByWlhrNmVqSmtiWHBFT0RGaloxQjRPRlpyYVRkS1luVjFUVzFHV1hKWFVHZFpiM2wwZVd0VldqTmxlWEZvZERGcU9VdGljSEJaUm5wMU5ubFJOV1owY0V4aWJuVjRSRk5PTjNSYVMyOXdkVE53V1hKemVtOTRSWGRSYUhGa09VaFdkbWRsT1VwR2FtVTFZamxOZDNwVmIxZzJNVkJ5UTAxbmMxaGtRMnAwVEVGelRUZFdRazVrTm1rMU0zWlRRMmc1YjNneU4wUk1SVWQzTW01WVRUSkdhVlpTVG1SdWFUVnhTR2xIWlRSNVJEVkRaRUp5YXlONk1tUnRla1E0TVdOblVIZzRWbXRwTjBwaWRYVk5iVVpaY2xkUVoxbHZlWFI1YTFWYU0yVjVjV2gwTVdvNVMySndjRmxHZW5VMmVWRTFablJ3VEdKdWRYaEVVMDQzZEZwTGIzQjFNM0JaY25ONmIzaEZkMUZvY1dRNVNGWjJaMlU1U2tacVpUVmlPVTEzZWxWdldEWXhVSEpEVFdkeldHUkRhblJNUVhOTk4xWkNUbVEyYVRVemRsTkRhRGx2ZURJM1JFeEZSM2N5YmxoTk1rWnBWbEpPWkc1cE5YRklhVWRsTkhsRU5VTmtRbkpySWl3aWRIbHdJam9pU2xkVUluMC5leUpsZUhBaU9qRTNNak01T0RJeE1ERXNJbWxoZENJNk1UY3lNVE01TURFd01Td2lhWE56SWpvaVpHbGtPbXRsZVRwNk1tUnRla1E0TVdOblVIZzRWbXRwTjBwaWRYVk5iVVpaY2xkUVoxbHZlWFI1YTFWYU0yVjVjV2gwTVdvNVMySndjRmxHZW5VMmVWRTFablJ3VEdKdWRYaEVVMDQzZEZwTGIzQjFNM0JaY25ONmIzaEZkMUZvY1dRNVNGWjJaMlU1U2tacVpUVmlPVTEzZWxWdldEWXhVSEpEVFdkeldHUkRhblJNUVhOTk4xWkNUbVEyYVRVemRsTkRhRGx2ZURJM1JFeEZSM2N5YmxoTk1rWnBWbEpPWkc1cE5YRklhVWRsTkhsRU5VTmtRbkpySWl3aWFuUnBJam9pZFhKdU9tUnBaRG81T1RZM01UWTFNaTAzWmpnNExUUXlNbVF0T1RnM1lpMHdNVE5tT0RFNU5EZzFPVEFpTENKdVltWWlPakUzTWpFek9UQXhNREVzSW5OMVlpSTZJbVJwWkRwclpYazZlakprYlhwRU9ERmpaMUI0T0ZacmFUZEtZblYxVFcxR1dYSlhVR2RaYjNsMGVXdFZXak5sZVhGb2RERnFPVXRpY1RobFkwNUJRM1JwYldSS2FrRnRZVlEzVERKV1IzSktaV2xYUlhWR2VERmtVMlp1VUZaVGRsQlZRVXB1YUc5NmJtWTBjRXAwV0hBNWN6ZHZXVFpNYUVKTWFITkVRMFZRVGtkalRXNXBVMEY0T0RKM1NqTnJPRE5wZWpkdVRVRnRlSFJZYlhGT1dsSlRUV1JhZVdsTVFUSTRORlpPUmtKck16UTNjMUJUZVV4R1RpSXNJblpqSWpwN0lrQmpiMjUwWlhoMElqcGJJbWgwZEhCek9pOHZkM2QzTG5jekxtOXlaeTh5TURFNEwyTnlaV1JsYm5ScFlXeHpMM1l4SWwwc0ltTnlaV1JsYm5ScFlXeFRZMmhsYldFaU9sdDdJbWxrSWpvaWFIUjBjSE02THk5aGNHa3RZMjl1Wm05eWJXRnVZMlV1WldKemFTNWxkUzkwY25WemRHVmtMWE5qYUdWdFlYTXRjbVZuYVhOMGNua3Zkakl2YzJOb1pXMWhjeTk2TTAxblZVWlZhMkkzTWpKMWNUUjRNMlIyTlhsQlNtMXVUbTE2UkVabFN6VlZRemg0T0ROUmIyVk1TazBpTENKMGVYQmxJam9pUm5Wc2JFcHpiMjVUWTJobGJXRldZV3hwWkdGMGIzSXlNREl4SW4xZExDSmpjbVZrWlc1MGFXRnNVM1ZpYW1WamRDSTZleUpmYzJRaU9sc2lUVVZtUVVoUWNYbGphbU5uZEVkVExVWjRaVlF6Y1dodlFpMVhVRk5zUWxOZldEaENTRk54U1VZelJTSXNJaTE0TUVKNldVVjNkRTgwTm1kNWJDMTJVRms1VlRBMldIVlZNRzl1U1dadVlqbHpTWFZ2TlVvelpqQWlMQ0pZYVhOQ1MzZHBWVTV0UzFOVGJWRnRhM05pYVVsdVIwMXZaSE5RY0RaSFFuTkdMV3htT1ZBdGNrVTRJaXdpTjBaQmFEaEdhMlp4Y1ZwRWEyTjZYMGR2ZDNVeWVqQk5YMWRzV1Y4NVpYWnlSVFEwYURGTGRHdFBWU0lzSWpOR05YbDJiRnBTTW1ONVVrTXdhR2g0UVVoSk1XNTFhVGhHTXpaQlpGUXhVakYwZGxNNFRrMTFTMWtpTENKMGQwRlBhVWR2ZWpGNFNYZFpkRTVoWDNoSFduSmhUVWd3Y2xOU2RGaHRSSGwwZVhCemRHSkNXR3haSWwwc0ltbGtJam9pWkdsa09tdGxlVHA2TW1SdGVrUTRNV05uVUhnNFZtdHBOMHBpZFhWTmJVWlpjbGRRWjFsdmVYUjVhMVZhTTJWNWNXaDBNV281UzJKeE9HVmpUa0ZEZEdsdFpFcHFRVzFoVkRkTU1sWkhja3BsYVZkRmRVWjRNV1JUWm01UVZsTjJVRlZCU201b2IzcHVaalJ3U25SWWNEbHpOMjlaTmt4b1FreG9jMFJEUlZCT1IyTk5ibWxUUVhnNE1uZEtNMnM0TTJsNk4yNU5RVzE0ZEZodGNVNWFVbE5OWkZwNWFVeEJNamcwVms1R1Ftc3pORGR6VUZONVRFWk9JaXdpYkdWbllXeEdiM0p0SWpvaVlXUmpJbjBzSW1WNGNHbHlZWFJwYjI1RVlYUmxJam9pTWpBeU5DMHdPQzB4T0ZReE1UbzFOVG93TVZvaUxDSnBaQ0k2SW5WeWJqcGthV1E2T1RrMk56RTJOVEl0TjJZNE9DMDBNakprTFRrNE4ySXRNREV6WmpneE9UUTROVGt3SWl3aWFYTnpkV0Z1WTJWRVlYUmxJam9pTWpBeU5DMHdOeTB4T1ZReE1UbzFOVG93TVZvaUxDSnBjM04xWldRaU9pSXlNREkwTFRBM0xURTVWREV4T2pVMU9qQXhXaUlzSW1semMzVmxjaUk2SW1ScFpEcHJaWGs2ZWpKa2JYcEVPREZqWjFCNE9GWnJhVGRLWW5WMVRXMUdXWEpYVUdkWmIzbDBlV3RWV2pObGVYRm9kREZxT1V0aWNIQlpSbnAxTm5sUk5XWjBjRXhpYm5WNFJGTk9OM1JhUzI5d2RUTndXWEp6ZW05NFJYZFJhSEZrT1VoV2RtZGxPVXBHYW1VMVlqbE5kM3BWYjFnMk1WQnlRMDFuYzFoa1EycDBURUZ6VFRkV1FrNWtObWsxTTNaVFEyZzViM2d5TjBSTVJVZDNNbTVZVFRKR2FWWlNUbVJ1YVRWeFNHbEhaVFI1UkRWRFpFSnlheUlzSW5SNWNHVWlPbHNpVm1WeWFXWnBZV0pzWlVObGNuUnBabWxqWVhSbFQyWlNaV2RwYzNSeVlYUnBiMjRpWFN3aWRtRnNhV1JHY205dElqb2lNakF5TkMwd055MHhPVlF4TVRvMU5Ub3dNVm9pZlgwLkpRWXZ4LUVUNkdtaXFoSXNlTnZ2Y3lHTmcyRVluSUt5YjBJNGdGM0luZkR5MmFhZHhHekNaTnV2TVNxMnpLZmNQRktrRmlGWVVkVlFacWRIZmZhbVp3fld5STVPRFF5TkRFeU9HVTVNREE1WVdJNE1USm1NR1prT1dVeE56ZGxZelk1TlRSbE56SXhOV016TWpjd016SXpOR1JrTTJNME1tUmxOMlJpT0RjeE9XUmhJaXdpYm1GdFpTSXNJblJsYzNRaVhRfld5STNZMlppT1dObVptVm1PREZtTlRSbFlUUTRZakk0WXpZMk1UVmlZalF4WmpOaU1EaGhOakpsWVRRMU1XSmtZV1l4T0dRNE1tRXhZVEEyTXprNU9XSXhJaXdpWVdOMGFYWnBkSGtpTENKaFltTWlYUX5XeUk1TmpjNVlUVTNZV0psTVRRNVpXUm1aalEyTkRnMU5ERXdaVGxpWmpVME56RTFPREptWkRKbFlqWXlaRGhoTWpZM1pESm1OV1EzWTJJMU56QmtOemd6SWl3aWNtVm5hWE4wY21GMGFXOXVSR0YwWlNJc0lqTXlNU0pkfld5SmlZMlF5WmpWa05XVTVOek0zWWprMk1EUmtOR1EwTkRVMVlqSmhPREZoTVRBek1qWTVORGxoTnpjd09EUXdNR1kxWWpZd01HSTFNRFE1TlRBellUTm1JaXdpYkdWbllXeFRkR0YwZFhNaUxDSmhjMkZrWm1FaVhRfld5STVOak13WldFNVpEazRZemsxTW1GbE5UUmpPV1U0WVRReFpEWTFZV0l3TldGbE5qTmtPRFExWXpjM1kySXdOalF4TmpjNU56YzJabUZrTjJVeFkyRTFJaXdpY21WbmFYTjBaWEpsWkVGa1pISmxjM01pTEhzaVlXUnRhVzVWYm1sMFRHVjJaV3d4SWpvaU1TSXNJbVoxYkd4QlpHUnlaWE56SWpvaU1pSXNJbXh2WTJGMGIzSkVaWE5wWjI1aGRHOXlJam9pTXlJc0luQnZjM1JEYjJSbElqb2lOQ0lzSW5CdmMzUk9ZVzFsSWpvaU5TSXNJblJvYjNKdmRXZG9SbUZ5WlNJNklqWWlmVjB-V3lJME9UQTNOalJtWm1GaFlUQmtNREZsTnpBd01qRmpNamN4TlRBNFpqVTBZbVV4TkRVM1ptUTJZakppTURnNU1XWXdOREprWlRFeE1UZ3dNVE5pWW1Reklpd2liM0puVG5WdFltVnlJaXdpTVRJeklsMCJdfX0.-GdfgwHOrsL8L_thvvCdT4G-oLu4NSTiUWPdZEhIbcuml7GwEjlvkt4eHhlA2g6M1xKjjtNqRc5RwCAbzlHkAw"
+        ps = {
+            "definition_id": "d0f645c1-99dc-4903-a9a6-0bc8f990e275",
+            "descriptor_map": [
+                {
+                    "format": "vc+sd-jwt",
+                    "id": "473f68d3-bbc4-4481-a25b-b534e74154e6",
+                    "path": "$",
+                    "path_nested": {
+                        "format": "jwt_vc",
+                        "id": "473f68d3-bbc4-4481-a25b-b534e74154e6",
+                        "path": "$.vp.verifiableCredential[0]",
+                    },
+                }
+            ],
+            "id": "aee963c7-ccd5-43d9-a4fa-6f2364aff87f",
+        }
+        pd_1 = {
+            "format": {
+                "vc+sd-jwt": {"alg": ["ES256"]},
+                "vp+sd-jwt": {"alg": ["ES256"]},
+            },
+            "id": "d0f645c1-99dc-4903-a9a6-0bc8f990e275",
+            "input_descriptors": [
+                {
+                    "constraints": {
+                        "fields": [
+                            {
+                                "filter": {
+                                    "contains": {
+                                        "const": "VerifiableCertificateOfRegistration"
+                                    },
+                                    "type": "array",
+                                },
+                                "path": ["$.type"],
+                            },
+                            {"path": ["$.credentialSubject.name"]},
+                            {"path": ["$.credentialSubject.legalForm"]},
+                            {"path": ["$.credentialSubject.activity"]},
+                            {"path": ["$.credentialSubject.registrationDate"]},
+                            {"path": ["$.credentialSubject.legalStatus"]},
+                            {"path": ["$.credentialSubject.registeredAddress"]},
+                            {"path": ["$.credentialSubject.identifier"]},
+                        ],
+                        "limit_disclosure": "required",
+                    },
+                    "id": "473f68d3-bbc4-4481-a25b-b534e74154e6",
+                }
+            ],
+        }
+        pd_2 = {
+            "format": {
+                "vc+sd-jwt": {"alg": ["ES256"]},
+                "vp+sd-jwt": {"alg": ["ES256"]},
+            },
+            "id": "d0f645c1-99dc-4903-a9a6-0bc8f990e275",
+            "input_descriptors": [
+                {
+                    "constraints": {
+                        "fields": [
+                            {
+                                "filter": {
+                                    "contains": {
+                                        "const": "VerifiableCertificateOfRegistration"
+                                    },
+                                    "type": "array",
+                                },
+                                "path": ["$.type"],
+                            },
+                            {"path": ["$.credentialSubject.name"]},
+                            {"path": ["$.credentialSubject.legalForm"]},
+                            {"path": ["$.credentialSubject.activity"]},
+                            {"path": ["$.credentialSubject.registrationDate"]},
+                            {"path": ["$.credentialSubject.legalStatus"]},
+                            {"path": ["$.credentialSubject.registeredAddress"]},
+                            {"path": ["$.credentialSubject.orgNumber"]},
+                        ],
+                        "limit_disclosure": "required",
+                    },
+                    "id": "473f68d3-bbc4-4481-a25b-b534e74154e6",
+                }
+            ],
+        }
+        is_validated = validate_vp_token(
+            vp_token=vp_token,
+            presentation_submission=ps,
+            presentation_definition=json.dumps(pd_1),
+        )
+
+        condition_1 = is_validated == False
+        self.assert_(
+            condition_1,
+            f"Expected validation result doesn't match with result: {is_validated}",
+        )
+
+        is_validated = validate_vp_token(
+            vp_token=vp_token,
+            presentation_submission=ps,
+            presentation_definition=json.dumps(pd_2),
+        )
+
+        condition_2 = is_validated == True
+        self.assert_(
+            condition_2,
+            f"Expected validation result doesn't match with result: {is_validated}",
         )
 
 
