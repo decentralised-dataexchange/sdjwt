@@ -717,7 +717,7 @@ def validate_vp_token(
             path = descriptor["path_nested"]["path"]
             id = descriptor["id"]
             # Parse the JSON data
-            jsonpath_expr = parse("$.vp.verifiableCredential[0]")
+            jsonpath_expr = parse(path)
             matches = jsonpath_expr.find(claims)
 
             # Extract the value
