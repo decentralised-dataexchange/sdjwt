@@ -296,11 +296,11 @@ def verify_vp_token(vp_token: str):
 
     key = None
     if kid:
+        # FIXME: We only support signature verification using did:key
+        #   This has to be extended for JWK by resolving JWKs URI
         if kid.startswith("did:key"):
             method_specific_identifier = kid.split("#")[1]
             key = DIDKey.method_specific_identifier_to_jwk(method_specific_identifier)
-        else:
-            raise UnSupportedSignatureAlgorithmError("Failed to parse the key ID")
     elif jwk:
         key = jwk.JWK(**jwk_dict)
     else:
