@@ -46,7 +46,8 @@ def create_jwt(
     exp: typing.Union[int, None] = None,
     **kwargs,
 ) -> str:
-    header = {"typ": "JWT", "alg": get_alg_for_key(key), "kid": kid}
+    assert key is not None, "Key must be provided"
+    header = {"typ": "JWT", "alg": get_alg_for_key(key), "kid": kid, "jwk": key.export(private_key=False, as_dict=True)}
 
     iat = iat or int(time.time())
     nbf = iat
