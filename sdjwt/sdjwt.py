@@ -47,7 +47,7 @@ def create_jwt(
     **kwargs,
 ) -> str:
     assert key is not None, "Key must be provided"
-    header = {"typ": "JWT", "alg": get_alg_for_key(key), "kid": key.key_id, "jwk": key.export(private_key=False, as_dict=True)}
+    header = {"typ": "JWT", "alg": get_alg_for_key(key), "kid": kid}
 
     iat = iat or int(time.time())
     nbf = iat
