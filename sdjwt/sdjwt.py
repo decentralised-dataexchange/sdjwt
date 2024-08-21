@@ -508,6 +508,13 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
     if credential_metadata:
+        credential_metadata.pop("issuanceDate","")
+        credential_metadata.pop("expirationDate","")
+        credential_metadata.pop("credentialSchema",[])
+        credential_metadata.pop("credentialStatus",{})
+        credential_metadata.pop("credentialSubject",{})
+        credential_metadata.pop("type",[])
+        
         vc.update(credential_metadata)
 
     jwt_credential = create_jwt(
@@ -618,6 +625,13 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
     if credential_metadata:
+        credential_metadata.pop("issuanceDate","")
+        credential_metadata.pop("expirationDate","")
+        credential_metadata.pop("credentialSchema",[])
+        credential_metadata.pop("credentialStatus",{})
+        credential_metadata.pop("credentialSubject",{})
+        credential_metadata.pop("type",[])
+
         vc.update(credential_metadata)
 
     jwt_credential = create_jwt(
