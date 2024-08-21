@@ -434,6 +434,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
     credential_status: typing.Optional[dict] = None,
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     disclosure_mapping: typing.Optional[dict] = None,
+    credential_metadata: typing.Optional[dict] = None,
 ) -> str:
     expiry_in_seconds = 2592000
     issuance_epoch, issuance_8601 = (
@@ -506,6 +507,8 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
         vc["credentialStatus"] = credential_status
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
+    if credential_metadata:
+        vc.update(credential_metadata)
 
     jwt_credential = create_jwt(
         vc=vc,
@@ -540,6 +543,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     disclosure_mapping: typing.Optional[dict] = None,
     expiry_in_seconds: typing.Optional[int] = None,
+    credential_metadata: typing.Optional[dict] = None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
@@ -613,6 +617,8 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         vc["credentialStatus"] = credential_status
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
+    if credential_metadata:
+        vc.update(credential_metadata)
 
     jwt_credential = create_jwt(
         vc=vc,
