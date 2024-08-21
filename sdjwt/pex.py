@@ -99,6 +99,7 @@ PresentationDefinitionJsonSchema = {
                         "fields": {
                             "type": "array",
                             "items": {"$ref": "#/definitions/field"},
+                            "minItems": 1,
                         },
                     },
                     "required": ["fields"],
