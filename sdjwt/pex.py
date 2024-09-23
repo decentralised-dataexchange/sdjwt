@@ -88,6 +88,25 @@ PresentationDefinitionJsonSchema = {
                 "id": {"type": "string"},
                 "name": {"type": "string"},
                 "purpose": {"type": "string"},
+                "format": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "title": "Presentation Definition Claim Format Designations",
+                    "type": "object",
+                    "additionalProperties": False,
+                    "patternProperties": {
+                        "mso_mdoc": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "alg": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {"type": "string", "enum": ["ES256"]},
+                                }
+                            },
+                        }
+                    },
+                },
                 "constraints": {
                     "type": "object",
                     "additionalProperties": False,
@@ -140,6 +159,17 @@ PresentationDefinitionJsonSchema = {
                             "type": "array",
                             "minItems": 1,
                             "items": {"type": "string"},
+                        }
+                    },
+                },
+                "mso_mdoc": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "alg": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {"type": "string", "enum": ["ES256"]},
                         }
                     },
                 },
@@ -197,6 +227,7 @@ PresentationSubmissionJsonSchema = {
                         "vc+sd-jwt",
                         "vp+sd-jwt",
                         "sd-jwt",
+                        "mso_mdoc",
                     ],
                 },
             },
