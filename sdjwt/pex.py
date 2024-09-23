@@ -26,12 +26,13 @@ class InputDescriptor(BaseModel):
     name: Optional[str] = None
     purpose: Optional[str] = None
     constraints: Dict[str, Union[str, List[Field]]]
+    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = None
 
 
 class PresentationDefinition(BaseModel):
     id: str
     input_descriptors: List[InputDescriptor]
-    format: Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]
+    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = None
 
 
 PresentationDefinitionJsonSchema = {
@@ -264,6 +265,12 @@ def validate_and_deserialise_presentation_definition(
         validate(
             instance=presentation_definition, schema=PresentationDefinitionJsonSchema
         )
+        presentation_definition_dict = PresentationDefinition(**presentation_definition)
+        if not presentation_definition_dict.format:
+            for input_descriptor in presentation_definition_dict.input_descriptors:
+                format = input_descriptor.format
+                if not format:
+                    raise PresentationDefinitionValidationError("Format is required")
         return PresentationDefinition(**presentation_definition)
     except exceptions.ValidationError as e:
         # FIXME: Temporary hack to validate presentation definition from itb
