@@ -740,6 +740,90 @@ def _create_disclosure_mapping_from_credential_definition(data):
 
 def create_disclosure_mapping_from_credential_definition(credential_definition):
     data = credential_definition["properties"]
-    disclosure_mapping = {}
-    disclosure_mapping["credentialSubject"] = _create_disclosure_mapping_from_credential_definition(data)
+    disclosure_mapping = _create_disclosure_mapping_from_credential_definition(data)
     return disclosure_mapping
+
+
+def create_vc_sd_jwt(
+    jti: str,
+    iss: str,
+    sub: str,
+    kid: str,
+    key: jwk.JWK,
+    vct: str,
+    credential_subject: dict,
+    disclosure_mapping: typing.Optional[dict] = None,
+    expiry_in_seconds: typing.Optional[int] = None,
+) -> str:
+    if not expiry_in_seconds:
+        expiry_in_seconds = 2592000
+    issuance_epoch, issuance_8601 = (
+        get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    )
+    expiration_epoch, expiration_8601 = (
+        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
+    )
+    _credentialSubject = {**credential_subject}
+    if disclosure_mapping:
+        disclosures = []
+
+        def calculate_sd(name, value):
+            _sd = []
+            disclosure_base64 = create_disclosure_base64(
+                create_random_salt(32), key=name, value=value
+            )
+            sd = create_sd_from_disclosure_base64(disclosure_base64)
+            disclosures.append(disclosure_base64)
+            _sd.append(sd)
+            return _sd
+
+        def update_value(obj, path):
+            # Construct json path dot notation
+            dot_notation_path = ".".join(path)
+
+            # Find matches for the json path
+            jp = parse(dot_notation_path)
+            matches = jp.find(obj)
+
+            # Iterate through the matches and calculated sd
+            for match in matches:
+                sd = calculate_sd(str(match.path), match.value)
+                if isinstance(match.context.value, dict):
+                    if not match.context.value.get("_sd"):
+                        match.context.value.setdefault("_sd", sd)
+                        del match.context.value[str(match.path)]
+                    else:
+                        match.context.value["_sd"].extend(sd)
+                        del match.context.value[str(match.path)]
+
+        def iterate_mapping(obj, path):
+            for key, value in obj.items():
+                if isinstance(value, dict):
+                    new_path = path + [f"'{key}'"]
+                    # Check if limitDisclosure is present or not
+                    if "limitDisclosure" in value and value["limitDisclosure"]:
+                        update_value(_credentialSubject, new_path)
+                    iterate_mapping(value, new_path)
+
+        # Iterate through disclosure mapping
+        # and add sd to the corresponding field in the
+        # credential subject
+        iterate_mapping(disclosure_mapping, [])
+
+
+    jwt_credential = create_jwt(
+        jti=jti,
+        sub=sub,
+        iss=iss,
+        kid=kid,
+        key=key,
+        iat=issuance_epoch,
+        exp=expiration_epoch,
+        vct=vct,
+        **_credentialSubject,
+    )
+    sd_disclosures = ""
+    if disclosure_mapping:
+        sd_disclosures = "~" + "~".join(disclosures)
+
+    return jwt_credential + sd_disclosures
