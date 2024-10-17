@@ -140,7 +140,7 @@ PresentationDefinitionJsonSchema = {
             "type": "object",
             "additionalProperties": False,
             "patternProperties": {
-                "^(jwt|jwt_vc|jwt_vp|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                "^(jwt|jwt_vc|jwt_vc_json|jwt_vp|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
@@ -228,6 +228,7 @@ PresentationSubmissionJsonSchema = {
                         "vp+sd-jwt",
                         "sd-jwt",
                         "mso_mdoc",
+                        "jwt_vc_json",
                     ],
                 },
             },
@@ -517,7 +518,7 @@ def find_all_sd_values(data):
 # Function to extract relevant disclosure values
 def extract_disclosure_values(input_descriptor, credential, disclosure):
     fields = input_descriptor["constraints"]["fields"]
-    sd_values = find_all_sd_values(credential["credentialSubject"])
+    sd_values = find_all_sd_values(credential)
 
     matching_disclosures = []
     for field in fields:
@@ -621,13 +622,11 @@ def match_credentials_for_sd_jwt(
             credential_subject, key_mapping = (
                 decode_credential_sd_to_credential_subject_with_key_mapping(
                     disclosure_mapping=disclosure_mapping,
-                    credential_subject=credential_decoded.get("vc").get(
-                        "credentialSubject"
-                    ),
+                    credential_subject=credential_decoded
                 )
             )
-            credential = credential_decoded.get("vc")
-            credential["credentialSubject"] = credential_subject
+            credential = credential_decoded
+            credential = credential_subject
             credential = json.dumps(credential)
 
             # Iterate through fields specified in the constraints
@@ -761,10 +760,10 @@ def validate_vp_token(
                 disclosure_mapping = get_all_disclosures_with_sd_from_token(vc_token)
 
                 credential_subject = create_credential_subject_for_sdjwt(
-                    credential_subject=vc_claims.get("vc").get("credentialSubject"),
+                    credential_subject=vc_claims,
                     disclosure_mapping=disclosure_mapping,
                 )
-                vc_claims["vc"]["credentialSubject"] = credential_subject
+                vc_claims = credential_subject
             elif vc_claims and format == "jwt_vc":
                 pass
 
@@ -773,10 +772,17 @@ def validate_vp_token(
             )
             for input_descriptor in input_descriptors:
                 if input_descriptor.get("id") == id:
-                    matches = match_credentials(
-                        json.dumps(input_descriptor),
-                        credentials=[json.dumps(vc_claims["vc"])],
-                    )
+                    limit_disclosure = input_descriptor.get("constraints").get("limit_disclosure",None)
+                    if limit_disclosure and limit_disclosure == "required":
+                        matches = match_credentials(
+                            json.dumps(input_descriptor),
+                            credentials=[json.dumps(vc_claims)],
+                        )
+                    else:
+                        matches = match_credentials(
+                            json.dumps(input_descriptor),
+                            credentials=[json.dumps(vc_claims["vc"])],
+                        )
                     if not matches or not matches[0]:
                         return False
                     else:
