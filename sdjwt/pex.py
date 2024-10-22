@@ -26,13 +26,17 @@ class InputDescriptor(BaseModel):
     name: Optional[str] = None
     purpose: Optional[str] = None
     constraints: Dict[str, Union[str, List[Field]]]
-    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = None
+    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = (
+        None
+    )
 
 
 class PresentationDefinition(BaseModel):
     id: str
     input_descriptors: List[InputDescriptor]
-    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = None
+    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = (
+        None
+    )
 
 
 PresentationDefinitionJsonSchema = {
@@ -105,7 +109,18 @@ PresentationDefinitionJsonSchema = {
                                     "items": {"type": "string", "enum": ["ES256"]},
                                 }
                             },
-                        }
+                        },
+                        "^(jwt|jwt_vc|jwt_vc_json|jwt_vp|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "alg": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {"type": "string"},
+                                }
+                            },
+                        },
                     },
                 },
                 "constraints": {
@@ -777,10 +792,16 @@ def validate_vp_token(
             input_descriptors = json.loads(presentation_definition).get(
                 "input_descriptors"
             )
+            format_info = json.loads(presentation_definition).get("format")
             for input_descriptor in input_descriptors:
+                credential_format = input_descriptor.get("format")
+                if not credential_format:
+                    credential_format = format_info
                 if input_descriptor.get("id") == id:
-                    limit_disclosure = input_descriptor.get("constraints").get("limit_disclosure",None)
-                    if limit_disclosure and limit_disclosure == "required":
+                    limit_disclosure = input_descriptor.get("constraints").get(
+                        "limit_disclosure", None
+                    )
+                    if "vc+sd-jwt" in credential_format:
                         matches = match_credentials(
                             json.dumps(input_descriptor),
                             credentials=[json.dumps(vc_claims)],
