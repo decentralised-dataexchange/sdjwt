@@ -456,7 +456,9 @@ def match_credentials(
 
             # Iterate through JSON paths for the current field
             for path_index, path in enumerate(field["path"]):
-
+                # Hacky fix for fixing IETF SD-JWT with W3C VC data model
+                if not path.startswith("$.credentialSubject"):
+                    path = "$.credentialSubject." + path.split("$.")[-1]
                 # Apply JSON path on the credential
                 path_matches, err = apply_json_path(credential, path)
 
@@ -766,12 +768,19 @@ def validate_vp_token(
 
             if vc_claims and format == "vc+sd-jwt":
                 disclosure_mapping = get_all_disclosures_with_sd_from_token(vc_token)
-
-                credential_subject = create_credential_subject_for_sdjwt(
-                    credential_subject=vc_claims.get("vc").get("credentialSubject"),
-                    disclosure_mapping=disclosure_mapping,
-                )
-                vc_claims["vc"]["credentialSubject"] = credential_subject
+                if vc_claims.get("vc"):
+                    credential_subject = create_credential_subject_for_sdjwt(
+                        credential_subject=vc_claims.get("vc").get("credentialSubject"),
+                        disclosure_mapping=disclosure_mapping,
+                    )
+                    vc_claims["vc"]["credentialSubject"] = credential_subject
+                else:
+                    # Hacky fix for fixing IETF SD-JWT with W3C VC data model
+                    credential_subject = create_credential_subject_for_sdjwt(
+                        credential_subject=vc_claims,
+                        disclosure_mapping=disclosure_mapping,
+                    )
+                    vc_claims = {"vc": {"credentialSubject": credential_subject}}
             elif vc_claims and format == "jwt_vc":
                 pass
 
