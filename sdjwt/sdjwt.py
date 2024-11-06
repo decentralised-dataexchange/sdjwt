@@ -44,6 +44,7 @@ def create_jwt(
     vc: typing.Union[dict, None] = None,
     iat: typing.Union[int, None] = None,
     exp: typing.Union[int, None] = None,
+    status: typing.Optional[dict] = None,
     **kwargs,
 ) -> str:
     assert key is not None, "Key must be provided"
@@ -63,6 +64,8 @@ def create_jwt(
     }
     if vc:
         claims["vc"] = vc
+    if status:
+        claims["status"] = status
     token = jwt.JWT(header=header, claims=claims)
     token.make_signed_token(key)
 
@@ -551,6 +554,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     disclosure_mapping: typing.Optional[dict] = None,
     expiry_in_seconds: typing.Optional[int] = None,
     credential_metadata: typing.Optional[dict] = None,
+    status: typing.Optional[dict] = None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
@@ -643,6 +647,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         key=key,
         iat=issuance_epoch,
         exp=expiration_epoch,
+        status=status,
     )
     sd_disclosures = ""
     if disclosure_mapping:
@@ -754,6 +759,7 @@ def create_vc_sd_jwt(
     credential_subject: dict,
     disclosure_mapping: typing.Optional[dict] = None,
     expiry_in_seconds: typing.Optional[int] = None,
+    credential_status: typing.Optional[dict] = None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
@@ -820,6 +826,7 @@ def create_vc_sd_jwt(
         iat=issuance_epoch,
         exp=expiration_epoch,
         vct=vct,
+        status=credential_status,
         **_credentialSubject,
     )
     sd_disclosures = ""
