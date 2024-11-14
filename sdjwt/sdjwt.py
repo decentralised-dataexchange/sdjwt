@@ -36,7 +36,6 @@ def get_alg_for_key(key: jwk.JWK) -> typing.Union[str, None]:
 
 
 def create_jwt(
-    jti: str,
     sub: str,
     iss: str,
     kid: str,
@@ -45,27 +44,35 @@ def create_jwt(
     iat: typing.Union[int, None] = None,
     exp: typing.Union[int, None] = None,
     status: typing.Optional[dict] = None,
+    jti: typing.Optional[str] = None,
+    typ: typing.Optional[str] = None,
+    cnf: typing.Optional[dict] = None,
     **kwargs,
 ) -> str:
     assert key is not None, "Key must be provided"
-    header = {"typ": "JWT", "alg": get_alg_for_key(key), "kid": kid}
+    if not typ:
+        typ = "JWT"
+    header = {"typ": typ, "alg": get_alg_for_key(key), "kid": kid}
 
     iat = iat or int(time.time())
     nbf = iat
     exp = exp or iat + 86400
     claims = {
         "iat": iat,
-        "jti": jti,
         "nbf": nbf,
         "exp": exp,
         "sub": sub,
         "iss": iss,
         **kwargs,
     }
+    if jti:
+        claims["jti"] = jti
     if vc:
         claims["vc"] = vc
     if status:
         claims["status"] = status
+    if cnf:
+        claims["cnf"] = cnf
     token = jwt.JWT(header=header, claims=claims)
     token.make_signed_token(key)
 
@@ -750,7 +757,6 @@ def create_disclosure_mapping_from_credential_definition(credential_definition):
 
 
 def create_vc_sd_jwt(
-    jti: str,
     iss: str,
     sub: str,
     kid: str,
@@ -760,6 +766,9 @@ def create_vc_sd_jwt(
     disclosure_mapping: typing.Optional[dict] = None,
     expiry_in_seconds: typing.Optional[int] = None,
     credential_status: typing.Optional[dict] = None,
+    cnf: typing.Optional[dict] = None,
+    typ: typing.Optional[str] = None,
+    jti: typing.Optional[str] = None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
@@ -818,7 +827,7 @@ def create_vc_sd_jwt(
 
 
     jwt_credential = create_jwt(
-        jti=jti,
+        jti=jti if jti else None,
         sub=sub,
         iss=iss,
         kid=kid,
@@ -827,6 +836,8 @@ def create_vc_sd_jwt(
         exp=expiration_epoch,
         vct=vct,
         status=credential_status,
+        typ=typ,
+        cnf=cnf,
         **_credentialSubject,
     )
     sd_disclosures = ""
