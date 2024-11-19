@@ -562,6 +562,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     expiry_in_seconds: typing.Optional[int] = None,
     credential_metadata: typing.Optional[dict] = None,
     status: typing.Optional[dict] = None,
+    cnf: typing.Optional[dict] = None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
@@ -655,6 +656,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         iat=issuance_epoch,
         exp=expiration_epoch,
         status=status,
+        cnf=cnf if cnf else None,
     )
     sd_disclosures = ""
     if disclosure_mapping:
