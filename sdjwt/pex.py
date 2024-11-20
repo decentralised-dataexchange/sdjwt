@@ -818,3 +818,51 @@ def validate_vp_token(
         if not is_verified:
             return False
     return True
+
+def decode_credential_sd_to_credential_claims(
+    disclosure_mapping: dict, credential_subject: dict
+) -> dict:
+    credential_subject = {"credentialSubject": credential_subject}
+    _credentialSubject = {**credential_subject}
+
+    def replace_sd_with_credential_subject_attributes(sds: list, disclosure: dict):
+        credential_attribute = {}
+        for sd in sds:
+            disclosure_base64 = disclosure.get(sd)
+            if disclosure_base64:
+                key, value = decode_disclosure_base64(disclosure_base64=disclosure_base64)
+                credential_attribute[key] = value
+        return credential_attribute
+
+    def update_value(obj, path, credential_attribute):
+        # Construct json path dot notation
+        dot_notation_path = ".".join(path)
+
+        # Find matches for the json path
+        jp = parse(dot_notation_path)
+        matches = jp.find(obj)
+
+        # Iterate through the matches
+        for match in matches:
+            if isinstance(match.context.value, dict):
+                match.context.value[str(match.path)].pop("_sd")
+                for key, value in credential_attribute.items():
+                    match.context.value[str(match.path)][key] = value
+
+    def iterate_mapping(obj, path):
+        for key, value in obj.items():
+
+            if isinstance(value, dict):
+                new_path = path + [f"'{key}'"]
+                # Check if sd is present or not
+                if "_sd" in value and value["_sd"]:
+                    credential_attribute = (
+                        replace_sd_with_credential_subject_attributes(
+                            value["_sd"], disclosure=disclosure_mapping
+                        )
+                    )
+                    update_value(_credentialSubject, new_path, credential_attribute)
+                iterate_mapping(value, new_path)
+
+    iterate_mapping(credential_subject, [])
+    return credential_subject["credentialSubject"]
