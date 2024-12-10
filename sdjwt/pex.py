@@ -819,14 +819,17 @@ def validate_vp_token(
             # Extract the value
             vc_token = matches[0].value if matches else None
 
-            headers_encoded, claims_encoded, _, _, key_binding_jwt = process_jwt(vc_token)
+            headers_encoded, claims_encoded, signature, disclosures, key_binding_jwt = process_jwt(vc_token)
 
             _ , vc_claims = decode_header_and_claims(headers_encoded,claims_encoded)
                 
 
             if vc_claims and format == "vc+sd-jwt":
                 if key_binding_jwt:
-                    temp_vc_token = vc_token.rsplit("~", 1)
+                    disclosures = "~".join(disclosures)
+                    temp_vc_token = f"{headers_encoded}.{claims_encoded}.{signature}"
+                    if disclosures:
+                        temp_vc_token += f"~{disclosures}"
                 else:
                     temp_vc_token = vc_token
                 disclosure_mapping = get_all_disclosures_with_sd_from_token(temp_vc_token)
