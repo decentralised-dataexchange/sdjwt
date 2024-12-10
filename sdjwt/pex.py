@@ -307,6 +307,49 @@ def validate_and_deserialise_presentation_submission(
     except exceptions.ValidationError as e:
         raise PresentationSubmissionValidationError(e.message)
 
+def process_jwt(token):
+    # Split the token into its parts
+    parts = token.split('~')
+
+    # Extract the header, body, and signature from the first part
+    jwt_parts = parts[0].split('.')
+    if len(jwt_parts) != 3:
+        raise ValueError(
+            "Invalid JWT format. Expected 'header.body.signature'.")
+
+    # Remove the VC JWT
+    parts.pop(0)
+    header = jwt_parts[0]
+    body = jwt_parts[1]
+    signature = jwt_parts[2]
+
+    # Check if the last part is an optional key binding JWT
+    optional_keybinding = None
+    if len(parts) > 1 and '.' in parts[-1] and len(parts[-1].split('.')) == 3:
+        optional_keybinding = parts.pop()  # Remove and assign the last part as keybinding
+
+    # The remaining parts are disclosures
+    disclosures = parts[:]
+
+    return header, body, signature, disclosures, optional_keybinding
+
+def decode_header_and_claims(headers_encoded: str,claims_encoded: str) -> Tuple[dict, dict]:
+    try:
+        claims_decoded = base64.b64decode(
+            claims_encoded + "=" * (-len(claims_encoded) % 4)
+        )
+        headers_decoded = base64.b64decode(
+            headers_encoded + "=" * (-len(headers_encoded) % 4)
+        )
+        return (json.loads(headers_decoded), json.loads(claims_decoded))
+    except Exception:
+        claims_decoded = base64.urlsafe_b64decode(
+            claims_encoded + "=" * (-len(claims_encoded) % 4)
+        )
+        headers_decoded = base64.urlsafe_b64decode(
+            headers_encoded + "=" * (-len(headers_encoded) % 4)
+        )
+        return (json.loads(headers_decoded), json.loads(claims_decoded))
 
 def decode_header_and_claims_in_jwt(token: str) -> Tuple[dict, dict]:
     headers_encoded, claims_encoded, _ = token.split(".")
@@ -776,10 +819,17 @@ def validate_vp_token(
             # Extract the value
             vc_token = matches[0].value if matches else None
 
-            vc_headers, vc_claims = decode_header_and_claims_in_jwt(vc_token)
+            headers_encoded, claims_encoded, _, _, key_binding_jwt = process_jwt(vc_token)
+
+            _ , vc_claims = decode_header_and_claims(headers_encoded,claims_encoded)
+                
 
             if vc_claims and format == "vc+sd-jwt":
-                disclosure_mapping = get_all_disclosures_with_sd_from_token(vc_token)
+                if key_binding_jwt:
+                    temp_vc_token = vc_token.rsplit("~", 1)
+                else:
+                    temp_vc_token = vc_token
+                disclosure_mapping = get_all_disclosures_with_sd_from_token(temp_vc_token)
 
                 credential_subject = create_credential_subject_for_sdjwt(
                     credential_subject=vc_claims,
@@ -804,7 +854,7 @@ def validate_vp_token(
                     if "vc+sd-jwt" in credential_format:
                         is_valid, err = validate_vc_token_for_sd_jwt(
                             json.dumps(input_descriptor),
-                            credential_token=vc_token,
+                            credential_token=temp_vc_token,
                             limit_disclosure=True if limit_disclosure else False,
                         )
                         if is_valid:
