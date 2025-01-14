@@ -110,7 +110,7 @@ PresentationDefinitionJsonSchema = {
                                 }
                             },
                         },
-                        "^(jwt|jwt_vc|jwt_vc_json|jwt_vp|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                        "^(jwt|jwt_vc|jwt_vc_json|jwt_vp_json|jwt_vp|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
                             "type": "object",
                             "additionalProperties": False,
                             "properties": {
@@ -156,7 +156,7 @@ PresentationDefinitionJsonSchema = {
             "type": "object",
             "additionalProperties": False,
             "patternProperties": {
-                "^(jwt|jwt_vc|jwt_vc_json|jwt_vp|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                "^(jwt|jwt_vc|jwt_vc_json|jwt_vp|jwt_vp_json|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
@@ -245,6 +245,7 @@ PresentationSubmissionJsonSchema = {
                         "sd-jwt",
                         "mso_mdoc",
                         "jwt_vc_json",
+                        "jwt_vp_json",
                     ],
                 },
             },
