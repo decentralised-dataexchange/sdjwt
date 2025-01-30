@@ -35,7 +35,7 @@ def get_alg_for_key(key: jwk.JWK) -> typing.Union[str, None]:
     return alg
 
 
-def create_jwt(
+async def create_jwt(
     sub: str,
     iss: str,
     kid: str,
@@ -47,12 +47,14 @@ def create_jwt(
     jti: typing.Optional[str] = None,
     typ: typing.Optional[str] = None,
     cnf: typing.Optional[dict] = None,
+    vault_client = None,
     **kwargs,
 ) -> str:
-    assert key is not None, "Key must be provided"
+    if not vault_client:
+        assert key is not None, "Key must be provided"
     if not typ:
         typ = "JWT"
-    header = {"typ": typ, "alg": get_alg_for_key(key), "kid": kid}
+    header = {"typ": typ, "kid": kid}
 
     iat = iat or int(time.time())
     nbf = iat
@@ -73,13 +75,20 @@ def create_jwt(
         claims["status"] = status
     if cnf:
         claims["cnf"] = cnf
-    token = jwt.JWT(header=header, claims=claims)
-    token.make_signed_token(key)
 
-    return token.serialize()
+    if vault_client:
+        token = await vault_client.make_signed_token(claims,header)
+    else:
+        header["alg"] = get_alg_for_key(key)
+
+        token = jwt.JWT(header=header, claims=claims)
+        token.make_signed_token(key)
+        token = token.serialize()
+
+    return token
 
 
-def create_w3c_vc_jwt(
+async def create_w3c_vc_jwt(
     jti: str,
     iss: str,
     sub: str,
@@ -118,7 +127,7 @@ def create_w3c_vc_jwt(
         vc["credentialStatus"] = credential_status
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
-    return create_jwt(
+    return await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -159,7 +168,7 @@ def create_disclosure_base64(random_salt: str, key: str, value: str) -> str:
     return disclosure_base64
 
 
-def create_flat_sd_jwt(
+async def create_flat_sd_jwt(
     jti: str,
     iss: str,
     sub: str,
@@ -182,7 +191,7 @@ def create_flat_sd_jwt(
 
     sd_payload = {"_sd": _sd}
 
-    vc_jwt = create_jwt(
+    vc_jwt =await create_jwt(
         jti=jti,
         sub=sub,
         iss=iss,
@@ -199,7 +208,7 @@ def create_flat_sd_jwt(
     return sd_jwt
 
 
-def create_w3c_vc_sd_jwt(
+async def create_w3c_vc_sd_jwt(
     jti: str,
     iss: str,
     sub: str,
@@ -252,7 +261,7 @@ def create_w3c_vc_sd_jwt(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
 
-    jwt_credential = create_jwt(
+    jwt_credential =await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -267,7 +276,7 @@ def create_w3c_vc_sd_jwt(
     return jwt_credential + sd_disclosures
 
 
-def create_w3c_vc_sd_jwt_for_data_attributes(
+async def create_w3c_vc_sd_jwt_for_data_attributes(
     jti: str,
     iss: str,
     sub: str,
@@ -415,7 +424,7 @@ def create_w3c_vc_sd_jwt_for_data_attributes(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
 
-    jwt_credential = create_jwt(
+    jwt_credential =await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -429,7 +438,7 @@ def create_w3c_vc_sd_jwt_for_data_attributes(
     return jwt_credential + sd_disclosures
 
 
-def create_w3c_vc_jwt_with_disclosure_mapping(
+async def create_w3c_vc_jwt_with_disclosure_mapping(
     jti: str,
     iss: str,
     sub: str,
@@ -527,7 +536,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
         
         vc.update(credential_metadata)
 
-    jwt_credential = create_jwt(
+    jwt_credential =await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -544,12 +553,11 @@ def create_w3c_vc_jwt_with_disclosure_mapping(
     return jwt_credential + sd_disclosures
 
 
-def create_w3c_vc_jwt_with_disclosure_mapping_v2(
+async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     jti: str,
     iss: str,
     sub: str,
     kid: str,
-    key: jwk.JWK,
     credential_issuer: str,
     credential_id: str,
     credential_type: typing.List[str],
@@ -563,6 +571,8 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     credential_metadata: typing.Optional[dict] = None,
     status: typing.Optional[dict] = None,
     cnf: typing.Optional[dict] = None,
+    key: typing.Optional[jwk.JWK]=None,
+    vault_client = None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
@@ -646,7 +656,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
 
         vc.update(credential_metadata)
 
-    jwt_credential = create_jwt(
+    jwt_credential =await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -657,6 +667,7 @@ def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         exp=expiration_epoch,
         status=status,
         cnf=cnf if cnf else None,
+        vault_client=vault_client,
     )
     sd_disclosures = ""
     if disclosure_mapping:
@@ -758,11 +769,10 @@ def create_disclosure_mapping_from_credential_definition(credential_definition):
     return disclosure_mapping
 
 
-def create_vc_sd_jwt(
+async def create_vc_sd_jwt(
     iss: str,
     sub: str,
     kid: str,
-    key: jwk.JWK,
     vct: str,
     credential_subject: dict,
     disclosure_mapping: typing.Optional[dict] = None,
@@ -771,6 +781,8 @@ def create_vc_sd_jwt(
     cnf: typing.Optional[dict] = None,
     typ: typing.Optional[str] = None,
     jti: typing.Optional[str] = None,
+    key: typing.Optional[jwk.JWK]=None,
+    vault_client = None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
@@ -828,7 +840,7 @@ def create_vc_sd_jwt(
         iterate_mapping(disclosure_mapping, [])
 
 
-    jwt_credential = create_jwt(
+    jwt_credential =await create_jwt(
         jti=jti if jti else None,
         sub=sub,
         iss=iss,
@@ -840,6 +852,7 @@ def create_vc_sd_jwt(
         status=credential_status,
         typ=typ,
         cnf=cnf,
+        vault_client=vault_client,
         **_credentialSubject,
     )
     sd_disclosures = ""
