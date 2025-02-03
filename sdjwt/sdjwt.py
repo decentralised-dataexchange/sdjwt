@@ -47,7 +47,7 @@ async def create_jwt(
     jti: typing.Optional[str] = None,
     typ: typing.Optional[str] = None,
     cnf: typing.Optional[dict] = None,
-    vault_client = None,
+    vault_client=None,
     **kwargs,
 ) -> str:
     if not vault_client:
@@ -77,7 +77,7 @@ async def create_jwt(
         claims["cnf"] = cnf
 
     if vault_client:
-        token = await vault_client.make_signed_token(claims,header)
+        token = await vault_client.make_signed_token(claims, header)
     else:
         header["alg"] = get_alg_for_key(key)
 
@@ -104,12 +104,14 @@ async def create_w3c_vc_jwt(
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
 ) -> str:
     expiry_in_seconds = 2592000
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
+    (
+        issuance_epoch,
+        issuance_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    (
+        expiration_epoch,
+        expiration_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
     vc = {
         "@context": credential_context,
         "id": credential_id,
@@ -191,7 +193,7 @@ async def create_flat_sd_jwt(
 
     sd_payload = {"_sd": _sd}
 
-    vc_jwt =await create_jwt(
+    vc_jwt = await create_jwt(
         jti=jti,
         sub=sub,
         iss=iss,
@@ -224,12 +226,14 @@ async def create_w3c_vc_sd_jwt(
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
 ) -> str:
     expiry_in_seconds = 2592000
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
+    (
+        issuance_epoch,
+        issuance_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    (
+        expiration_epoch,
+        expiration_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
     _sd = []
     disclosures = []
     for name, value in credential_subject.items():
@@ -261,7 +265,7 @@ async def create_w3c_vc_sd_jwt(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
 
-    jwt_credential =await create_jwt(
+    jwt_credential = await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -293,12 +297,14 @@ async def create_w3c_vc_sd_jwt_for_data_attributes(
     limited_disclosure: typing.Optional[bool] = None,
 ):
     expiry_in_seconds = 2592000
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
+    (
+        issuance_epoch,
+        issuance_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    (
+        expiration_epoch,
+        expiration_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
 
     vc = {
         "@context": credential_context,
@@ -424,7 +430,7 @@ async def create_w3c_vc_sd_jwt_for_data_attributes(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
 
-    jwt_credential =await create_jwt(
+    jwt_credential = await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -456,12 +462,14 @@ async def create_w3c_vc_jwt_with_disclosure_mapping(
     credential_metadata: typing.Optional[dict] = None,
 ) -> str:
     expiry_in_seconds = 2592000
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
+    (
+        issuance_epoch,
+        issuance_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    (
+        expiration_epoch,
+        expiration_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
     _credentialSubject = {**credential_subject}
     if disclosure_mapping:
         disclosures = []
@@ -527,16 +535,16 @@ async def create_w3c_vc_jwt_with_disclosure_mapping(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
     if credential_metadata:
-        credential_metadata.pop("issuanceDate","")
-        credential_metadata.pop("expirationDate","")
-        credential_metadata.pop("credentialSchema",[])
-        credential_metadata.pop("credentialStatus",{})
-        credential_metadata.pop("credentialSubject",{})
-        credential_metadata.pop("type",[])
-        
+        credential_metadata.pop("issuanceDate", "")
+        credential_metadata.pop("expirationDate", "")
+        credential_metadata.pop("credentialSchema", [])
+        credential_metadata.pop("credentialStatus", {})
+        credential_metadata.pop("credentialSubject", {})
+        credential_metadata.pop("type", [])
+
         vc.update(credential_metadata)
 
-    jwt_credential =await create_jwt(
+    jwt_credential = await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -571,17 +579,19 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     credential_metadata: typing.Optional[dict] = None,
     status: typing.Optional[dict] = None,
     cnf: typing.Optional[dict] = None,
-    key: typing.Optional[jwk.JWK]=None,
-    vault_client = None,
+    key: typing.Optional[jwk.JWK] = None,
+    vault_client=None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
+    (
+        issuance_epoch,
+        issuance_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    (
+        expiration_epoch,
+        expiration_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
     _credentialSubject = {**credential_subject}
     if disclosure_mapping:
         disclosures = []
@@ -647,16 +657,16 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
     if credential_metadata:
-        credential_metadata.pop("issuanceDate","")
-        credential_metadata.pop("expirationDate","")
-        credential_metadata.pop("credentialSchema",[])
-        credential_metadata.pop("credentialStatus",{})
-        credential_metadata.pop("credentialSubject",{})
-        credential_metadata.pop("type",[])
+        credential_metadata.pop("issuanceDate", "")
+        credential_metadata.pop("expirationDate", "")
+        credential_metadata.pop("credentialSchema", [])
+        credential_metadata.pop("credentialStatus", {})
+        credential_metadata.pop("credentialSubject", {})
+        credential_metadata.pop("type", [])
 
         vc.update(credential_metadata)
 
-    jwt_credential =await create_jwt(
+    jwt_credential = await create_jwt(
         vc=vc,
         jti=jti,
         sub=sub,
@@ -732,7 +742,6 @@ def decode_credential_sd_to_credential_subject(
 
     def iterate_mapping(obj, path):
         for key, value in obj.items():
-
             if isinstance(value, dict):
                 new_path = path + [f"'{key}'"]
                 # Check if sd is present or not
@@ -753,15 +762,22 @@ def _create_disclosure_mapping_from_credential_definition(data):
     result = {}
     if isinstance(data, dict):
         for key, value in data.items():
-            if isinstance(value, dict) and "limitDisclosure" in value and value["limitDisclosure"] is True:
+            if (
+                isinstance(value, dict)
+                and "limitDisclosure" in value
+                and value["limitDisclosure"] is True
+            ):
                 # Direct property with limitDisclosure
                 result[key] = {k: v for k, v in value.items() if k == "limitDisclosure"}
             elif isinstance(value, dict) and "properties" in value:
                 # Nested property, need to go deeper
-                nested_result = _create_disclosure_mapping_from_credential_definition(value["properties"])
+                nested_result = _create_disclosure_mapping_from_credential_definition(
+                    value["properties"]
+                )
                 if nested_result:
                     result[key] = nested_result
     return result
+
 
 def create_disclosure_mapping_from_credential_definition(credential_definition):
     data = credential_definition["properties"]
@@ -781,17 +797,19 @@ async def create_vc_sd_jwt(
     cnf: typing.Optional[dict] = None,
     typ: typing.Optional[str] = None,
     jti: typing.Optional[str] = None,
-    key: typing.Optional[jwk.JWK]=None,
-    vault_client = None,
+    key: typing.Optional[jwk.JWK] = None,
+    vault_client=None,
 ) -> str:
     if not expiry_in_seconds:
         expiry_in_seconds = 2592000
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
+    (
+        issuance_epoch,
+        issuance_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    (
+        expiration_epoch,
+        expiration_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
     _credentialSubject = {**credential_subject}
     if disclosure_mapping:
         disclosures = []
@@ -839,8 +857,7 @@ async def create_vc_sd_jwt(
         # credential subject
         iterate_mapping(disclosure_mapping, [])
 
-
-    jwt_credential =await create_jwt(
+    jwt_credential = await create_jwt(
         jti=jti if jti else None,
         sub=sub,
         iss=iss,

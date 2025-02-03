@@ -58,12 +58,14 @@ def create_flat_sd_jwt_for_passport(didkey: DIDKey):
     sub = "did:key:datawallet_did"
 
     expiry_in_seconds = 3600
-    issuance_epoch, issuance_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    )
-    expiration_epoch, expiration_8601 = (
-        get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
-    )
+    (
+        issuance_epoch,
+        issuance_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
+    (
+        expiration_epoch,
+        expiration_8601,
+    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
 
     passport_claims = {
         "name": "Jane Doe",
@@ -140,7 +142,6 @@ class TestSDJWT(IsolatedAsyncioTestCase):
         )
 
     async def test_create_flat_sd_jwt_for_passport(self):
-
         crypto_seed = "helloworld"
         key_did = await generate_did_key_from_seed(crypto_seed)
         key_did.generate()
@@ -164,7 +165,6 @@ class TestSDJWT(IsolatedAsyncioTestCase):
         self.assert_(condition6, "VC doesn't contain all of the digest of disclosures")
 
     async def test_create_w3c_vc_sd_jwt_for_passport(self):
-
         crypto_seed = "helloworld"
         key_did = await generate_did_key_from_seed(crypto_seed)
         key_did.generate()
@@ -465,7 +465,7 @@ class TestSDJWT(IsolatedAsyncioTestCase):
         )
 
         condition_1 = (
-            disclosure_mapping_1["credentialSubject"]['identifier']["id"][
+            disclosure_mapping_1["credentialSubject"]["identifier"]["id"][
                 "limitDisclosure"
             ]
             == expected_disclosure_mapping_1["credentialSubject"]["identifier"]["id"][

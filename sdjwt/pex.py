@@ -26,17 +26,17 @@ class InputDescriptor(BaseModel):
     name: Optional[str] = None
     purpose: Optional[str] = None
     constraints: Dict[str, Union[str, List[Field]]]
-    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = (
-        None
-    )
+    format: Optional[
+        Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]
+    ] = None
 
 
 class PresentationDefinition(BaseModel):
     id: str
     input_descriptors: List[InputDescriptor]
-    format: Optional[Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]] = (
-        None
-    )
+    format: Optional[
+        Dict[str, Union[Dict[str, List[str]], Dict[str, List[str]]]]
+    ] = None
 
 
 PresentationDefinitionJsonSchema = {
@@ -308,15 +308,15 @@ def validate_and_deserialise_presentation_submission(
     except exceptions.ValidationError as e:
         raise PresentationSubmissionValidationError(e.message)
 
+
 def process_jwt(token):
     # Split the token into its parts
-    parts = token.split('~')
+    parts = token.split("~")
 
     # Extract the header, body, and signature from the first part
-    jwt_parts = parts[0].split('.')
+    jwt_parts = parts[0].split(".")
     if len(jwt_parts) != 3:
-        raise ValueError(
-            "Invalid JWT format. Expected 'header.body.signature'.")
+        raise ValueError("Invalid JWT format. Expected 'header.body.signature'.")
 
     # Remove the VC JWT
     parts.pop(0)
@@ -330,8 +330,10 @@ def process_jwt(token):
         optional_keybinding = None
     elif len(parts) >= 1:
         optional_keybinding = parts[-1]
-        if len(optional_keybinding.split('.')) != 3:
-            raise ValueError("Invalid Key binding jwt. Expected 'header.body.signature'.")
+        if len(optional_keybinding.split(".")) != 3:
+            raise ValueError(
+                "Invalid Key binding jwt. Expected 'header.body.signature'."
+            )
     else:
         optional_keybinding = None
 
@@ -340,7 +342,10 @@ def process_jwt(token):
 
     return header, body, signature, disclosures, optional_keybinding
 
-def decode_header_and_claims(headers_encoded: str,claims_encoded: str) -> Tuple[dict, dict]:
+
+def decode_header_and_claims(
+    headers_encoded: str, claims_encoded: str
+) -> Tuple[dict, dict]:
     try:
         claims_decoded = base64.b64decode(
             claims_encoded + "=" * (-len(claims_encoded) % 4)
@@ -357,6 +362,7 @@ def decode_header_and_claims(headers_encoded: str,claims_encoded: str) -> Tuple[
             headers_encoded + "=" * (-len(headers_encoded) % 4)
         )
         return (json.loads(headers_decoded), json.loads(claims_decoded))
+
 
 def decode_header_and_claims_in_jwt(token: str) -> Tuple[dict, dict]:
     headers_encoded, claims_encoded, _ = token.split(".")
@@ -479,7 +485,6 @@ def apply_json_path(input_json_string, path):
 
 
 def validate_json_schema(input_json_string, schema_string):
-
     try:
         # Parse schema JSON string
         schema = json.loads(schema_string)
@@ -509,20 +514,17 @@ def match_credentials(
 
     # Iterate through each credential
     for credential_index, credential in enumerate(credentials):
-
         # Assume credential matches until proven otherwise
         credential_matched = True
         matched_fields = []
 
         # Iterate through fields specified in the constraints
         for field_index, field in enumerate(descriptor["constraints"]["fields"]):
-
             # Assume field matches until proven otherwise
             field_matched = False
 
             # Iterate through JSON paths for the current field
             for path_index, path in enumerate(field["path"]):
-
                 # Apply JSON path on the credential
                 path_matches, err = apply_json_path(credential, path)
 
@@ -650,15 +652,15 @@ def decode_credential_sd_to_credential_subject_with_key_mapping(
 
     def iterate_mapping(obj, path):
         for key, value in obj.items():
-
             if isinstance(value, dict):
                 new_path = path + [f"'{key}'"]
                 # Check if sd is present or not
                 if "_sd" in value and value["_sd"]:
-                    credential_attribute, key_mapping = (
-                        replace_sd_with_credential_subject_attributes(
-                            value["_sd"], disclosure=disclosure_mapping
-                        )
+                    (
+                        credential_attribute,
+                        key_mapping,
+                    ) = replace_sd_with_credential_subject_attributes(
+                        value["_sd"], disclosure=disclosure_mapping
                     )
                     update_value(_credentialSubject, new_path, credential_attribute)
                 iterate_mapping(value, new_path)
@@ -683,7 +685,6 @@ def match_credentials_for_sd_jwt(
     # Iterate through each credential
     for item in credentials:
         for credential_id, credential_token in item.items():
-
             # Assume credential matches until proven otherwise
             credential_matched = True
             matched_fields = []
@@ -691,11 +692,12 @@ def match_credentials_for_sd_jwt(
                 token=credential_token
             )
             _, credential_decoded = decode_header_and_claims_in_jwt(credential_token)
-            credential_subject, key_mapping = (
-                decode_credential_sd_to_credential_subject_with_key_mapping(
-                    disclosure_mapping=disclosure_mapping,
-                    credential_subject=credential_decoded,
-                )
+            (
+                credential_subject,
+                key_mapping,
+            ) = decode_credential_sd_to_credential_subject_with_key_mapping(
+                disclosure_mapping=disclosure_mapping,
+                credential_subject=credential_decoded,
             )
             credential = credential_decoded
             credential = credential_subject
@@ -703,13 +705,11 @@ def match_credentials_for_sd_jwt(
 
             # Iterate through fields specified in the constraints
             for field_index, field in enumerate(descriptor["constraints"]["fields"]):
-
                 # Assume field matches until proven otherwise
                 field_matched = False
 
                 # Iterate through JSON paths for the current field
                 for path_index, path in enumerate(field["path"]):
-
                     # Apply JSON path on the credential
                     path_matches, err = apply_json_path(credential, path)
 
@@ -734,7 +734,6 @@ def match_credentials_for_sd_jwt(
                         field_matched = True
                         value = key_mapping.get(str(path_matches[0]))
                         if value:
-
                             matched_fields.append(
                                 MatchedField(
                                     index=field_index,
@@ -772,7 +771,6 @@ def match_credentials_for_sd_jwt(
 def remove_sd_and_add_disclosure_value(
     credential_subject, disclosure_key, disclosure_value
 ):
-
     if isinstance(credential_subject, dict):
         keys_to_modify = list(
             credential_subject.keys()
@@ -813,7 +811,7 @@ def validate_vp_token(
     presentation_definition: dict,
 ) -> bool:
     headers, claims = decode_header_and_claims_in_jwt(vp_token)
-    try :
+    try:
         for descriptor in presentation_submission.get("descriptor_map"):
             is_verified = False
             if "path_nested" in descriptor:
@@ -827,20 +825,29 @@ def validate_vp_token(
                 # Extract the value
                 vc_token = matches[0].value if matches else None
 
-                headers_encoded, claims_encoded, signature, disclosures, key_binding_jwt = process_jwt(vc_token)
+                (
+                    headers_encoded,
+                    claims_encoded,
+                    signature,
+                    disclosures,
+                    key_binding_jwt,
+                ) = process_jwt(vc_token)
 
-                _ , vc_claims = decode_header_and_claims(headers_encoded,claims_encoded)
-                    
+                _, vc_claims = decode_header_and_claims(headers_encoded, claims_encoded)
 
                 if vc_claims and format == "vc+sd-jwt":
                     if key_binding_jwt:
                         disclosures = "~".join(disclosures)
-                        temp_vc_token = f"{headers_encoded}.{claims_encoded}.{signature}"
+                        temp_vc_token = (
+                            f"{headers_encoded}.{claims_encoded}.{signature}"
+                        )
                         if disclosures:
                             temp_vc_token += f"~{disclosures}"
                     else:
                         temp_vc_token = vc_token
-                    disclosure_mapping = get_all_disclosures_with_sd_from_token(temp_vc_token)
+                    disclosure_mapping = get_all_disclosures_with_sd_from_token(
+                        temp_vc_token
+                    )
 
                     credential_subject = create_credential_subject_for_sdjwt(
                         credential_subject=vc_claims,
@@ -922,7 +929,6 @@ def decode_credential_sd_to_credential_claims(
 
     def iterate_mapping(obj, path):
         for key, value in obj.items():
-
             if isinstance(value, dict):
                 new_path = path + [f"'{key}'"]
                 # Check if sd is present or not
@@ -1044,7 +1050,6 @@ def match_credentials_for_ietf_sd_jwt(
             matched_disclosure_mapping = {}
             # Iterate through fields specified in the constraints
             for field_index, field in enumerate(descriptor["constraints"]["fields"]):
-
                 for path_index, path in enumerate(field["path"]):
                     is_matched, disclosures, err, matches = apply_json_path_for_sd_jwt(
                         credential, path, disclosure_mapping
@@ -1161,7 +1166,6 @@ def validate_vc_token_for_sd_jwt(
     credential_matched = True
     # Iterate through fields specified in the constraints
     for field_index, field in enumerate(descriptor["constraints"]["fields"]):
-
         for path_index, path in enumerate(field["path"]):
             is_matched, err, matches = apply_json_path_for_validating_sd_jwt(
                 credential, path, disclosure_mapping
