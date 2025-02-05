@@ -857,6 +857,8 @@ async def create_vc_sd_jwt(
         # credential subject
         iterate_mapping(disclosure_mapping, [])
 
+    if "sub" in _credentialSubject:
+        del _credentialSubject["sub"]
     jwt_credential = await create_jwt(
         jti=jti if jti else None,
         sub=sub,
