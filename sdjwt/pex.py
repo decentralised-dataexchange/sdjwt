@@ -125,6 +125,11 @@ PresentationDefinitionJsonSchema = {
                             "type": "object",
                             "additionalProperties": False,
                             "properties": {
+                                "alg": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {"type": "string"},
+                                },
                                 "sd-jwt_alg_values": {
                                     "type": "array",
                                     "minItems": 1,
@@ -187,6 +192,11 @@ PresentationDefinitionJsonSchema = {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
+                        "alg": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {"type": "string"},
+                        },
                         "sd-jwt_alg_values": {
                             "type": "array",
                             "minItems": 1,
