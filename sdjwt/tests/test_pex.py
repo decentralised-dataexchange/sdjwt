@@ -298,7 +298,9 @@ class TestPEX(IsolatedAsyncioTestCase):
                         MatchedField(
                             index=1,
                             path=MatchedPath(
-                                path="$.credentialSubject.name", index=0, value="test"
+                                path="$.credentialSubject.name",
+                                index=0,
+                                value="test",
                             ),
                         ),
                         MatchedField(
@@ -355,8 +357,10 @@ class TestPEX(IsolatedAsyncioTestCase):
         }
         pd_1 = {
             "format": {
-                "vc+sd-jwt": {"alg": ["ES256"]},
-                "vp+sd-jwt": {"alg": ["ES256"]},
+                "dc+sd-jwt": {
+                    "sd-jwt_alg_values": ["ES256"],
+                    "kb-jwt_alg_values": ["ES256"],
+                },
             },
             "id": "d0f645c1-99dc-4903-a9a6-0bc8f990e275",
             "input_descriptors": [
@@ -388,8 +392,10 @@ class TestPEX(IsolatedAsyncioTestCase):
         }
         pd_2 = {
             "format": {
-                "vc+sd-jwt": {"alg": ["ES256"]},
-                "vp+sd-jwt": {"alg": ["ES256"]},
+                "dc+sd-jwt": {
+                    "sd-jwt_alg_values": ["ES256"],
+                    "kb-jwt_alg_values": ["ES256"],
+                },
             },
             "id": "d0f645c1-99dc-4903-a9a6-0bc8f990e275",
             "input_descriptors": [

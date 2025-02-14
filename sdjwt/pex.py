@@ -110,7 +110,7 @@ PresentationDefinitionJsonSchema = {
                                 }
                             },
                         },
-                        "^(jwt|jwt_vc|jwt_vc_json|jwt_vp_json|jwt_vp|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                        "^(jwt|jwt_vc|jwt_vc_json|jwt_vp_json|jwt_vp)$": {
                             "type": "object",
                             "additionalProperties": False,
                             "properties": {
@@ -119,6 +119,22 @@ PresentationDefinitionJsonSchema = {
                                     "minItems": 1,
                                     "items": {"type": "string"},
                                 }
+                            },
+                        },
+                        "^(vp\+sd-jwt|dc\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "sd-jwt_alg_values": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {"type": "string"},
+                                },
+                                "kb-jwt_alg_values": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {"type": "string"},
+                                },
                             },
                         },
                     },
@@ -156,7 +172,7 @@ PresentationDefinitionJsonSchema = {
             "type": "object",
             "additionalProperties": False,
             "patternProperties": {
-                "^(jwt|jwt_vc|jwt_vc_json|jwt_vp|jwt_vp_json|vp\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                "^(jwt|jwt_vc|jwt_vc_json|jwt_vp_json|jwt_vp)$": {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
@@ -165,6 +181,22 @@ PresentationDefinitionJsonSchema = {
                             "minItems": 1,
                             "items": {"type": "string"},
                         }
+                    },
+                },
+                "^(vp\+sd-jwt|dc\+sd-jwt|vc\+sd-jwt|sd-jwt)$": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "sd-jwt_alg_values": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {"type": "string"},
+                        },
+                        "kb-jwt_alg_values": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {"type": "string"},
+                        },
                     },
                 },
                 "^ldp_vc$|^ldp_vp$|^ldp$": {
@@ -242,6 +274,7 @@ PresentationSubmissionJsonSchema = {
                         "ldp_vp",
                         "vc+sd-jwt",
                         "vp+sd-jwt",
+                        "dc+sd-jwt",
                         "sd-jwt",
                         "mso_mdoc",
                         "jwt_vc_json",
