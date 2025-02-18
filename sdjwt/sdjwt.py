@@ -566,32 +566,26 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
     iss: str,
     sub: str,
     kid: str,
-    credential_issuer: str,
+    issuance_date: str,
+    expiration_date: str,
+    iat: int,
+    exp: int,
+    credential_issuer: typing.Optional[str],
     credential_id: str,
     credential_type: typing.List[str],
-    credential_context: typing.List[str],
+    credential_context: typing.Optional[typing.List[str]],
     credential_subject: dict,
     credential_schema: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     credential_status: typing.Optional[dict] = None,
     terms_of_use: typing.Optional[typing.Union[dict, typing.List[dict]]] = None,
     disclosure_mapping: typing.Optional[dict] = None,
-    expiry_in_seconds: typing.Optional[int] = None,
     credential_metadata: typing.Optional[dict] = None,
     status: typing.Optional[dict] = None,
     cnf: typing.Optional[dict] = None,
     key: typing.Optional[jwk.JWK] = None,
     vault_client=None,
+    validation_path: typing.Optional[str] = None,
 ) -> str:
-    if not expiry_in_seconds:
-        expiry_in_seconds = 2592000
-    (
-        issuance_epoch,
-        issuance_8601,
-    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    (
-        expiration_epoch,
-        expiration_8601,
-    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
     _credentialSubject = {**credential_subject}
     if disclosure_mapping:
         disclosures = []
@@ -639,16 +633,28 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         # credential subject
         iterate_mapping(disclosure_mapping, [])
 
+    
+    temp_vc = _credentialSubject.get("credentialSubject")
+    temp_vc.pop("@context", [])
+    temp_vc.pop("id", "")
+    temp_vc.pop("type", [])
+    temp_vc.pop("issuer", "")
+    temp_vc.pop("issuanceDate", "")
+    temp_vc.pop("validFrom", "")
+    temp_vc.pop("expirationDate", "")
+    temp_vc.pop("issued", "")
+    temp_vc.pop("credentialSchema", {})
+
     vc = {
         "@context": credential_context,
         "id": credential_id,
         "type": credential_type,
         "issuer": credential_issuer,
-        "issuanceDate": issuance_8601,
-        "validFrom": issuance_8601,
-        "expirationDate": expiration_8601,
-        "issued": issuance_8601,
-        **_credentialSubject,
+        "issuanceDate": issuance_date,
+        "validFrom": issuance_date,
+        "expirationDate": expiration_date,
+        "issued": issuance_date,
+        **temp_vc,
     }
     if credential_schema:
         vc["credentialSchema"] = credential_schema
@@ -656,6 +662,7 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         vc["credentialStatus"] = credential_status
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
+    
     if credential_metadata:
         credential_metadata.pop("issuanceDate", "")
         credential_metadata.pop("expirationDate", "")
@@ -673,8 +680,8 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         iss=iss,
         kid=kid,
         key=key,
-        iat=issuance_epoch,
-        exp=expiration_epoch,
+        iat=iat,
+        exp=exp,
         status=status,
         cnf=cnf if cnf else None,
         vault_client=vault_client,
@@ -758,19 +765,33 @@ def decode_credential_sd_to_credential_subject(
     return credential_subject["credentialSubject"]
 
 
+def extract_properties(schema):
+    """Extract properties from a JSON Schema, handling allOf, anyOf, and oneOf."""
+    properties = schema.get("properties", {}).copy()  # Start with direct properties
+
+    # Process allOf, anyOf, and oneOf
+    for key in ["allOf", "anyOf", "oneOf"]:
+        if key in schema:
+            for sub_schema in schema[key]:
+                properties.update(extract_properties(sub_schema))  # Merge properties
+
+    return properties
+
+
+def create_disclosure_mapping_from_credential_definition(credential_definition):
+    """Extract disclosure mapping from a credential schema, handling combinators."""
+    extracted_properties = extract_properties(credential_definition)
+    return _create_disclosure_mapping_from_credential_definition(extracted_properties)
+
+
 def _create_disclosure_mapping_from_credential_definition(data):
+    """Recursively extract limitDisclosure fields."""
     result = {}
     if isinstance(data, dict):
         for key, value in data.items():
-            if (
-                isinstance(value, dict)
-                and "limitDisclosure" in value
-                and value["limitDisclosure"] is True
-            ):
-                # Direct property with limitDisclosure
-                result[key] = {k: v for k, v in value.items() if k == "limitDisclosure"}
+            if isinstance(value, dict) and value.get("limitDisclosure") is True:
+                result[key] = {"limitDisclosure": True}
             elif isinstance(value, dict) and "properties" in value:
-                # Nested property, need to go deeper
                 nested_result = _create_disclosure_mapping_from_credential_definition(
                     value["properties"]
                 )
@@ -779,20 +800,15 @@ def _create_disclosure_mapping_from_credential_definition(data):
     return result
 
 
-def create_disclosure_mapping_from_credential_definition(credential_definition):
-    data = credential_definition["properties"]
-    disclosure_mapping = _create_disclosure_mapping_from_credential_definition(data)
-    return disclosure_mapping
-
-
 async def create_vc_sd_jwt(
     iss: str,
     sub: str,
     kid: str,
     vct: str,
+    iat: int,
+    exp: int,
     credential_subject: dict,
     disclosure_mapping: typing.Optional[dict] = None,
-    expiry_in_seconds: typing.Optional[int] = None,
     credential_status: typing.Optional[dict] = None,
     cnf: typing.Optional[dict] = None,
     typ: typing.Optional[str] = None,
@@ -800,16 +816,7 @@ async def create_vc_sd_jwt(
     key: typing.Optional[jwk.JWK] = None,
     vault_client=None,
 ) -> str:
-    if not expiry_in_seconds:
-        expiry_in_seconds = 2592000
-    (
-        issuance_epoch,
-        issuance_8601,
-    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format()
-    (
-        expiration_epoch,
-        expiration_8601,
-    ) = get_current_datetime_in_epoch_seconds_and_iso8601_format(expiry_in_seconds)
+    
     _credentialSubject = {**credential_subject}
     if disclosure_mapping:
         disclosures = []
@@ -857,16 +864,20 @@ async def create_vc_sd_jwt(
         # credential subject
         iterate_mapping(disclosure_mapping, [])
 
-    if "sub" in _credentialSubject:
-        del _credentialSubject["sub"]
+    standard_claims = ["iss", "sub", "cnf","exp","iat","jti", "vct", "status"]
+
+    for key in standard_claims:
+        if key in _credentialSubject:
+            del _credentialSubject[key]
+
     jwt_credential = await create_jwt(
         jti=jti if jti else None,
         sub=sub,
         iss=iss,
         kid=kid,
         key=key,
-        iat=issuance_epoch,
-        exp=expiration_epoch,
+        iat=iat,
+        exp=exp,
         vct=vct,
         status=credential_status,
         typ=typ,
