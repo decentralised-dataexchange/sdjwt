@@ -888,5 +888,8 @@ async def create_vc_sd_jwt(
     sd_disclosures = ""
     if disclosure_mapping:
         sd_disclosures = "~" + "~".join(disclosures)
+    credential_token = jwt_credential + sd_disclosures
+    if not credential_token.endswith("~"):
+        credential_token += "~"
 
-    return jwt_credential + sd_disclosures
+    return credential_token
