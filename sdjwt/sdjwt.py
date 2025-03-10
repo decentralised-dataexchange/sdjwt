@@ -633,7 +633,6 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         # credential subject
         iterate_mapping(disclosure_mapping, [])
 
-    
     temp_vc = _credentialSubject.get("credentialSubject")
     temp_vc.pop("@context", [])
     temp_vc.pop("id", "")
@@ -662,7 +661,7 @@ async def create_w3c_vc_jwt_with_disclosure_mapping_v2(
         vc["credentialStatus"] = credential_status
     if terms_of_use:
         vc["termsOfUse"] = terms_of_use
-    
+
     if credential_metadata:
         credential_metadata.pop("issuanceDate", "")
         credential_metadata.pop("expirationDate", "")
@@ -816,7 +815,6 @@ async def create_vc_sd_jwt(
     key: typing.Optional[jwk.JWK] = None,
     vault_client=None,
 ) -> str:
-    
     _credentialSubject = {**credential_subject}
     if disclosure_mapping:
         disclosures = []
@@ -864,7 +862,7 @@ async def create_vc_sd_jwt(
         # credential subject
         iterate_mapping(disclosure_mapping, [])
 
-    standard_claims = ["iss", "sub", "cnf","exp","iat","jti", "vct", "status"]
+    standard_claims = ["iss", "sub", "cnf", "exp", "iat", "jti", "vct", "status"]
 
     for key in standard_claims:
         if key in _credentialSubject:
